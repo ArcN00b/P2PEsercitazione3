@@ -200,15 +200,20 @@ class ReceiveHandler(asyncore.dispatcher):
                         msgRet="ASUP"+pkID+ip+port
                         t=Sender(msgRet,fields[1],fields[2])
                         t.run()
+
                     #decremento il ttl e controllo se devo inviare
+                    # TODO la SUPE va divulgata solo agli altri super o a tutti i peer connessi?
+                    # TODO divulgare la SUPE
+                    '''
                     ttl = int(fields[3])-1
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
+
                         lista=database.listClient()
                         if len(lista)>0:
                             t1 = SenderAll(msg,lista )
-                            t1.run()
+                            t1.run()'''
 
             elif command=="ASUP":
                 pkID=fields[0]
@@ -258,13 +263,47 @@ p=Peer(ipv4,ipv6)
 if sel=='s':
     #Sono un suprenodo
     superNodo=True
-    #Va scritto il menu del supernodo
-    print("Menu del supernodo")
+    # menu del supernodo
+    while True:
+        print("1. Visualizza Peer")
+        print("2. Visualizza File")
+        print(" ")
+        sel=input("Inserisci il numero del comando da eseguire ")
+        if sel=='1':
+            True
+            # TODO visualizzare elenco peer connessi
+        elif sel=='2':
+            True
+            # TODO visualizzare elenco file caricati ne supernodo
+
 else:
     #Non sono un peer
     superNodo=False
     print("Menu del peer")
-    #Va scritto il menu del peer normale
+    # menu del peer normale
+    while True:
+        print("1. Ricerca Supernodo")
+        print("2. Aggiungi File")
+        print("3. Rimuovi File")
+        print("4. Ricerca File")
+        print("5. Logout")
+        print(" ")
+        sel=input("Inserisci il numero del comando da eseguire ")
+        if sel=='1':
+            True
+            # TODO ricerca supernodo e login al supernodo selezionato
+        elif sel=='2':
+            True
+            # TODO aggiugi un file al supernodo
+        elif sel=='3':
+            True
+            # TODO rimuovi un file dal supernodo
+        elif sel=='4':
+            True
+            # TODO ricerca di un file al supernodo
+        elif sel=='5':
+            True
+            # TODO logout dal supernodo
 
 
 # i = db.findFile(md5="1"*32)

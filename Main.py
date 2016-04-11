@@ -163,6 +163,8 @@ else:
                     print("Non ci sono file nel database")
                     True
 
+                md5=lst[i][0]
+                name=lst[i][1]
                 msg='DEFF'+Utility.sessionId+md5+name
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 t.run()
@@ -183,7 +185,6 @@ else:
                 print("Scelta MD5                                        Nome")
                 for i in range(0,len(lst)):
                     print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
-
             else:
                 print("Non ci sono file nel database")
 

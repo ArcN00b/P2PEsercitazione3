@@ -211,8 +211,10 @@ class ManageDB:
             count = c.fetchall()
 
             if(len(count)==0):
+                c.execute("UPDATE FILES SET NAME=:NOME WHERE MD5=:COD" , {"NOME": fileName, "COD": Md5})
+                conn.commit()
                 c.execute("INSERT INTO FILES (SESSIONID, NAME, MD5) VALUES (?,?,?)" , (sessionId, fileName, Md5))
-            conn.commit()
+                conn.commit()
 
         except sqlite3.Error as e:
 
@@ -362,6 +364,75 @@ class ManageDB:
                 conn.close()
             if count is not None:
                 return count
+
+    # Metodo che aggiunge un packetId
+    def addPkt(self, id):
+        try:
+
+            # Creo la connessione al database e creo un cursore ad esso
+            conn = sqlite3.connect("data.db")
+            c = conn.cursor()
+
+            # Rimuovo i packets meno recenti ed aggiungo il packet
+            c.execute("DELETE FROM PACKETS WHERE DATE < datetime('now', 'LOCALTIME', ?)" , ("-" + str(self.deleteTime) + " SECONDS",) )
+            conn.commit()
+
+            # Inserisco il packet solamento se non presente
+            c.execute("SELECT COUNT(ID) FROM PACKETS WHERE ID=:COD", {"COD": id})
+            count = c.fetchall()
+            if(count[0][0] == 0):
+                c.execute("INSERT INTO PACKETS (ID, DATE) VALUES ( ?, DATETIME('NOW', 'LOCALTIME'))" , (id,))
+
+            conn.commit()
+
+        except sqlite3.Error as e:
+
+            # Gestisco l'eccezione
+            if conn:
+                conn.rollback()
+
+            raise Exception("Errore - addPkt: %s:" % e.args[0])
+
+        finally:
+
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+
+    # Metodo che ricerca un packetId, ritorna True se e' presente, altrimenti False
+    def checkPkt(self, id):
+        try:
+
+            # Creo la connessione al database e creo un cursore ad esso
+            conn = sqlite3.connect("data.db")
+            c = conn.cursor()
+
+            # Elimino i packets meno recenti e verifico se e' presente il packet
+            c.execute("DELETE FROM PACKETS WHERE DATE < datetime('now', 'LOCALTIME', ?)" , ("-" + str(self.deleteTime) + " SECONDS",) )
+            conn.commit()
+            c.execute("SELECT COUNT(ID) FROM PACKETS WHERE ID=:COD" , {"COD": id} )
+            conn.commit()
+
+            count  = c.fetchall()
+
+            # Ritorno True se il packet e' presente, altrimenti False
+            if(count[0][0] == 1):
+                return True
+            elif(count[0][0] == 0):
+                return False
+            else:
+                raise Exception("Errore - checkPkt: packetId multipli con stesso id")
+
+        except sqlite3.Error as e:
+
+            raise Exception("Errore - checkPkt: %s:" % e.args[0])
+
+        finally:
+
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+
 
 
 

@@ -11,10 +11,13 @@ from Utility import *
 global database
 global numFindFile
 global listFindFile
-global superNodo
-global sessionId
-global ipSuperNodo
-global portaSuperNodo
+global numFindSNode
+global listFindSNode
+
+global superNodo # Indica se il programma in esecuzione e' un SuperNodo o un Peer
+global ipSuperNodo # Indica l'ip del SuperNodo a cui il Peer e' collegato
+global portSuperNodo # Indica la porta del SuperNodo a cui il Peer e' collegato
+global sessionId # Indica il sessionId del Peer
 
 class Peer:
 
@@ -191,6 +194,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     listFindFile.append(fields)
                     print(str(numFindFile) + " " + ipServer + " " + md5file + " " + filename)'''
 
+
             #Procedura LOGI
             elif command=='LOGI':
                 if superNodo:
@@ -257,39 +261,51 @@ class ReceiveHandler(asyncore.dispatcher):
                     delete=fields[0]
                     print('Logout effetuato, cancellati: '+delete)
 
-            # Gestisco arrivo pacchetto supre
+            # Gestisco arrivo pacchetto supe
             elif command=="SUPE":
                 pkID=fields[0]
                 if database.checkPkt(pkID)==False:
                     database.addPkt(pkID)
-                    #se sono un supernodo rispondo con asup
+                    # Se sono un supernodo rispondo con asup
                     if superNodo:
                         ip=Utility.MY_IPV4+"|"+Utility.MY_IPV6
                         port='{:0>5}'.format(Utility.PORT)
                         msgRet="ASUP"+pkID+ip+port
                         t=Sender(msgRet,fields[1],fields[2])
                         t.run()
-
-                    #decremento il ttl e controllo se devo inviare
-                    # TODO la SUPE va divulgata ai supernodi e ai peer
-                    # TODO divulgare la SUPE
-                    '''
+                    # Decremento il ttl e controllo se devo inviare
                     ttl = int(fields[3])-1
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
-
-                        lista=database.listClient()
-                        if len(lista)>0:
-                            t1 = SenderAll(msg,lista )
-                            t1.run()'''
+                        listaP=database.listPeer()
+                        if len(listaP)>0:
+                            tP = SenderAll(msg,listaP)
+                            tP.run()
+                        listaS=database.listSuperNode()
+                        if len(listaS)>0:
+                            tS = SenderAll(msg,listaS)
+                            tS.run()
 
             elif command=="ASUP":
                 pkID=fields[0]
                 ip=fields[1]
                 port=fields[2]
-                if database.checkPkt(pkID)==True:
+                if superNodo==True and database.checkPkt(pkID)==True:
                     database.addSuperNode(ip,port)
+                else:
+                    findPeer=False
+                    for i in range(0,len(listFindSNode)):
+                        if listFindSNode[i][1]==ip and listFindSNode[i][2]==port:
+                            findPeer=True
+
+                    if database.checkPkt(pkID)==True and findPeer:
+                        global numFindSNode
+                        numFindSNode+=1
+                        listFindSNode.append(fields)
+                        print(str(numFindSNode) + " " + ip + " " + port)
+
+
 
             else:
                 print("ricevuto altro")
@@ -316,10 +332,14 @@ numFindFile=0
 listFindFile=[]
 sessionId=''
 ipSuperNodo=''
-portaSuperNodo=''
+portSuperNodo=''
+numFindSNode=0
+listFindSNode=[]
+
 database = ManageDB()
 # TODO completare con la lista dei near iniziali
-database.addClient(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
+database.addSuperNode(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
+#database.addClient(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
 #database.addClient(ip="172.030.007.002|fc00:0000:0000:0000:0000:0000:0007:0002",port="3000")
 
 #database.addFile("1"*32, "live brixton.jpg")
@@ -337,13 +357,32 @@ if sel=='s':
     superNodo=True
     # menu del supernodo
     while True:
-        print("1. Visualizza Peer")
+        print("1. Ricerca Supernodi")
         print("2. Visualizza File")
         print(" ")
         sel=input("Inserisci il numero del comando da eseguire ")
         if sel=='1':
-            True
-            # TODO visualizzare elenco peer connessi
+            pktID=Utility.generateId(16)
+            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
+            port='{:0>5}'.format(Utility.PORT)
+            ttl='{:0>2}'.format(4)
+            msg="SUPE"+pktID+ip+port+ttl
+            database.addPkt(pktID)
+            numFindSNode = 0
+            listFindSNode = []
+
+            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
+            listaP=database.listPeer()
+            if len(listaP)>0:
+                tP = SenderAll(msg, listaP)
+                tP.run()
+
+            # Invio la richiesta a tutti i SuperNodi
+            listaS=database.listSuperNode()
+            if len(listaS)>0:
+                tS = SenderAll(msg, listaS)
+                tS.run()
+
         elif sel=='2':
             # Ottengo la lista dei file dal database
             lst = database.listFileForSessionId(sessionId)
@@ -381,8 +420,53 @@ else:
         print(" ")
         sel=input("Inserisci il numero del comando da eseguire ")
         if sel=='1':
-            True
-            # TODO ricerca supernodo e login al supernodo selezionato
+            pktID=Utility.generateId(16)
+            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
+            port='{:0>5}'.format(Utility.PORT)
+            ttl='{:0>2}'.format(4)
+            msg="SUPE"+pktID+ip+port+ttl
+            database.addPkt(pktID)
+            numFindSNode = 0
+            listFindSNode = []
+
+            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
+            listaP=database.listPeer()
+            if len(listaP)>0:
+                tP = SenderAll(msg, listaP)
+                tP.run()
+
+            # Invio la richiesta a tutti i SuperNodi
+            listaS=database.listSuperNode()
+            if len(listaS)>0:
+                tS = SenderAll(msg, listaS)
+                tS.run()
+
+            # Visualizzo le possibili scelte
+            print("Scegli il supernodo a cui vuoi collegarti")
+
+            i = -1
+            while i not in range(0, numFindSNode +1):
+                i = int(input("Scegli il supernodo a cui vuoi collegarti\n"))
+                if database.checkPkt(pktID) == False:
+                    break
+
+            if numFindSNode == 0:
+                print ("Nessun supernodo trovato")
+
+            elif i > 0:
+                i = i - 1;
+                ipDest = listFindSNode[i][1]
+                portDest = listFindSNode[i][2]
+                msg="LOGI"+ip+port
+                ipSuperNodo = ipDest
+                portSuperNodo = portDest
+
+                try:
+                    t1 = Sender(msg, ipDest, portDest)
+                    t1.run()
+                except Exception as e:
+                    print(e)
+
         elif sel=='2':
             if sessionId!='':
                 sel=input('Inserici nome file da aggiungere ')

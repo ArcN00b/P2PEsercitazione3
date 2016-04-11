@@ -233,7 +233,21 @@ class ReceiveHandler(asyncore.dispatcher):
                     if len(l)>0:
                         database.removeFile(ssID,md5)
 
+            # Procedura LOGO
+            elif command=='LOGO':
+                if superNodo:
+                    ssID=fields[0]
+                    l=database.findPeer(ssID,'','',2)
+                    if len(l)>0:
+                        sessionId=''
+                        canc=database.removeAllFileForSessionId(ssID)
+                        msgRet='ALGO'+'{:0>3}'.format(canc)
 
+            # Procedura ALGO
+            elif command=='ALGO':
+                if not superNodo:
+                    delete=fields[0]
+                    print('Logout effetuato, cancellati: '+delete)
 
             # Gestisco arrivo pacchetto supre
             elif command=="SUPE":

@@ -116,6 +116,7 @@ class ManageDB:
 
     # Metodo ritorna la lista di supernodi
     def listSuperNode(self):
+        count=None
         try:
             # Connessione
             conn=sqlite3.connect("data.db")
@@ -125,8 +126,6 @@ class ManageDB:
             count=c.fetchall()
 
             conn.commit()
-
-            return conn
 
         except sqlite3.Error as e:
             # Gestisco l'eccezione
@@ -138,9 +137,12 @@ class ManageDB:
             # Chiudo la connessione
             if conn:
                 conn.close()
+            if count is not None:
+                return count
 
     # Metodo che ritorna la lista dei peer
     def listPeer(self):
+        count=None
         try:
             # Connessione
             conn=sqlite3.connect("data.db")
@@ -163,9 +165,12 @@ class ManageDB:
             # Chiudo la connessione
             if conn:
                 conn.close()
+            if count is not None:
+                return count
 
     # Metodo per trovare un peer
     def findPeer(self,sessionId,ip,port,flag):
+        count=None
         try:
             # Connessione
             conn=sqlite3.connect("data.db")
@@ -180,8 +185,6 @@ class ManageDB:
 
             conn.commit()
 
-            return conn
-
         except sqlite3.Error as e:
             # Gestisco l'eccezione
             if conn:
@@ -192,6 +195,8 @@ class ManageDB:
             # Chiudo la connessione
             if conn:
                 conn.close()
+            if count is not None:
+                return count
 
     # Metodo che aggiunge un file
     def addFile(self,sessionId,fileName,Md5):
@@ -247,6 +252,40 @@ class ManageDB:
             # Chiudo la connessione
             if conn:
                 conn.close()
+
+    # Metodo che rimuove tutti i file di un sessionId
+    def removeAllFileForSessionId(self,sessionId):
+        count=None
+        try:
+
+            # Creo la connessione al database e creo un cursore ad esso
+            conn = sqlite3.connect("data.db")
+            c = conn.cursor()
+
+            c.execute("SELECT COUNT(MD5) FROM FILES WHERE SESSIONID=:SID", {"SID": sessionId})
+            count = c.fetchall()
+
+            if (count[0][0]>0):
+                c.execute("DELETE FROM FILES WHERE SESSIONID=:SID", {"SID": sessionId})
+                conn.commit()
+
+        except sqlite3.Error as e:
+
+            # Gestisco l'eccezione
+            if conn:
+                conn.rollback()
+
+            raise Exception("Errore - removeAllFileForSessionId: %s:" % e.args[0])
+
+        finally:
+
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+            if count is not None:
+                return count[0][0]
+
+
 
 
 # SUPERNODES:   IP          PORT

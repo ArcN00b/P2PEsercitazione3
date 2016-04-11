@@ -87,10 +87,12 @@ class ReceiveHandler(asyncore.dispatcher):
 
             #Procedura LOGI
             elif command=='LOGI':
+                # solo il supernodo risponde a una LOGI
                 if Utility.superNodo:
                     ip=fields[0]
                     port=fields[1]
                     try:
+                        # se il peer è presente gli do il suo vecchio sessionId altrimenti uno nuovo
                         l=Utility.database.findPeer('',ip,port,1)
                         if len(l)>0:
                             ssID=l[0][0]
@@ -102,11 +104,13 @@ class ReceiveHandler(asyncore.dispatcher):
 
                     msgRet='ALGI'+ssID
                     t=Sender(msgRet,ip,port)
-                    t.run()
+                    t.start()
 
             # Procedura ALGI
             elif command=='ALGI':
+                # Solo il peer deve elaborare una algi
                 if not Utility.superNodo:
+                    # controllo se ho ricevuto un sessionId valido se si lo salvo altrimenti no
                     s='0'*16
                     ssID=fields[0]
                     if ssID==s:
@@ -117,38 +121,50 @@ class ReceiveHandler(asyncore.dispatcher):
 
             #Procedura ADFF
             elif command=='ADFF':
+                # solo il supernodo deve elaborare una adff
                 if Utility.superNodo:
                     ssID=fields[0]
                     md5=fields[1]
                     name=fields[2]
+                    # controllo se il sessionId e registrato nel database
+                    # se si aggiungo il file al database
                     l=Utility.database.findPeer(ssID,'','',2)
                     if len(l)>0:
                         Utility.database.addFile(ssID,name,md5)
 
             # Procedura DEFF
             elif command=='DEFF':
+                # solo il supernodo deve elaborare una deff
                 if Utility.superNodo:
                     ssID=fields[0]
                     md5=fields[1]
+                    # controllo se il sessionId e registrato nel database
+                    # se si rimuovo il file al database
                     l=Utility.database.findPeer(ssID,'','',2)
                     if len(l)>0:
                         Utility.database.removeFile(ssID,md5)
 
             # Procedura LOGO
             elif command=='LOGO':
+                # solo il supernodo deve elaborare una richiesta logo
                 if Utility.superNodo:
                     ssID=fields[0]
+                    # controllo se il sessionId e nel database
                     l=Utility.database.findPeer(ssID,'','',2)
                     if len(l)>0:
+                        # se il sessionId e presente rimuovo i suoi file e ritorno il messaggio ALGO
                         ip=l[0][0]
                         port=l[0][1]
                         canc=Utility.database.removeAllFileForSessionId(ssID)
                         msgRet='ALGO'+'{:0>3}'.format(canc)
                         t=Sender(msgRet,ip,port)
+                        t.start()
 
             # Procedura ALGO
             elif command=='ALGO':
+                # solo il peer deve elaborare la ALGO
                 if not Utility.superNodo:
+                    #Azzero le variabili e stampo
                     delete=fields[0]
                     Utility.sessionId=''
                     Utility.ipSuperNodo=''
@@ -166,7 +182,7 @@ class ReceiveHandler(asyncore.dispatcher):
                         port='{:0>5}'.format(Utility.PORT)
                         msgRet="ASUP"+pkID+ip+port
                         t=Sender(msgRet,fields[1],fields[2])
-                        t.run()
+                        t.start()
                     # Decremento il ttl e controllo se devo inviare
                     ttl = int(fields[3])-1
                     if ttl > 0:

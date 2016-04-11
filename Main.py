@@ -145,54 +145,79 @@ class ReceiveHandler(asyncore.dispatcher):
 
             elif(command == "QUER"):
                 # TODO implementare metodo quer
-                '''
-                msgRet = 'AQUE'
-                # Prendo i campi del messaggio ricevuto
-                pkID = fields[0]
-                ipDest = fields[1]
-                portDest = fields[2]
-                ttl = fields[3]
-                name = fields[4]
-
-                # Controllo se il packetId è già presente se è presente non rispondo alla richiesta
-                # E non la rispedisco
-                if database.checkPkt(pkID)==False:
-                    database.addPkt(pkID)
-                    # Esegue la risposta ad una query
-                    msgRet = msgRet + pkID
-                    ip = Utility.MY_IPV4 + '|' + Utility.MY_IPV6
-                    port = '{:0>5}'.format(Utility.PORT)
-                    msgRet = msgRet + ip + port
-                    l = database.findMd5(name.strip(' '))
-                    for i in range(0, len(l)):
-                        f = database.findFile(l[i][0])
-                        r = msgRet
-                        r = r + l[i][0] + str(f[0][0]).ljust(100, ' ')
-                        t1 = Sender(r, ipDest, portDest)
-                        t1.run()
-
-                    # controllo se devo divulgare la query
-                    if int(ttl) >= 1:
-                        ttl='{:0>2}'.format(int(ttl)-1)
-                        msg="QUER"+pkID+ipDest+portDest+ttl+name
-                        lista=database.listClient()
-                        if len(lista)>0:
-                            t2 = SenderAll(msg, lista)
-                            t2.run()
-                '''
+                True
 
             elif command=="AQUE":
                 # TODO implementare metodo aque
-                '''pkID = fields[0]
-                if database.checkPkt(pkID)==True and fields[3] not in listFindFile:
-                    global numFindFile
-                    numFindFile+=1
-                    ipServer = fields[1]
-                    portServer = fields[2]
-                    md5file = fields[3]
-                    filename = str(fields[4]).strip()
-                    listFindFile.append(fields)
-                    print(str(numFindFile) + " " + ipServer + " " + md5file + " " + filename)'''
+                True
+
+            #Procedura LOGI
+            elif command=='LOGI':
+                if superNodo:
+                    ip=fields[0]
+                    port=fields[1]
+                    try:
+                        l=database.findPeer('',ip,port,1)
+                        if len(l)>0:
+                            ssID=l[0][0]
+                        else:
+                            ssID=Utility.generateId(16)
+                        database.addPeer(ssID,ip,port)
+                    except Exception as e:
+                        ssID='0'*16
+
+                    msgRet='ALGI'+ssID
+                    t=Sender(msgRet,ip,port)
+                    t.run()
+
+            # Procedura ALGI
+            elif command=='ALGI':
+                if not superNodo:
+                    s='0'*16
+                    ssID=fields[0]
+                    if ssID==s:
+                        global ipSuperNodo
+                        global portSuperNodo
+                        ipSuperNodo=''
+                        portSuperNodo=''
+                    else:
+                        global sessionId
+                        sessionId=ssID
+
+            #Procedura ADFF
+            elif command=='ADFF':
+                if superNodo:
+                    ssID=fields[0]
+                    md5=fields[1]
+                    name=fields[2]
+                    l=database.findPeer(sessionId,'','',2)
+                    if len(l)>0:
+                        database.addFile(ssID,name,md5)
+
+            # Procedura DEFF
+            elif command=='DEFF':
+                if superNodo:
+                    ssID=fields[0]
+                    md5=fields[1]
+                    l=database.findPeer(ssID,'','',2)
+                    if len(l)>0:
+                        database.removeFile(ssID,md5)
+
+            # Procedura LOGO
+            elif command=='LOGO':
+                if superNodo:
+                    ssID=fields[0]
+                    l=database.findPeer(ssID,'','',2)
+                    if len(l)>0:
+                        sessionId=''
+                        canc=database.removeAllFileForSessionId(ssID)
+                        msgRet='ALGO'+'{:0>3}'.format(canc)
+
+            # Procedura ALGO
+            elif command=='ALGO':
+                if not superNodo:
+                    delete=fields[0]
+                    print('Logout effetuato, cancellati: '+delete)
 
             # Gestisco arrivo pacchetto supe
             elif command=="SUPE":
@@ -238,11 +263,6 @@ class ReceiveHandler(asyncore.dispatcher):
                         listFindSNode.append(fields)
                         print(str(numFindSNode) + " " + ip + " " + port)
 
-            elif command=="LOGI":
-
-
-
-            elif command=="ALGI":
 
 
             else:
@@ -268,6 +288,9 @@ class ReceiveHandler(asyncore.dispatcher):
 
 numFindFile=0
 listFindFile=[]
+sessionId=''
+ipSuperNodo=''
+portSuperNodo=''
 numFindSNode=0
 listFindSNode=[]
 
@@ -290,24 +313,13 @@ p=Peer(ipv4,ipv6)
 if sel=='s':
     #Sono un suprenodo
     superNodo=True
-    #Va scritto il menu del supernodo
-    print("Menu del supernodo")
-else:
-    #Non sono un peer
-    superNodo=False
-    print("Menu del peer")
-    #Va scritto il menu del peer normale
-
-while True:
-    # Menu SuperNodo
-    if superNodo==True:
+    # menu del supernodo
+    while True:
         print("1. Ricerca Supernodi")
-        print("2. Aggiungi SuperNodo")
-        print("3. Visualizza File")
-        print("4. Visualizza Vicini")
-        sel=input("Inserisci il numero del comando da eseguire\n")
-
-        if sel=="1":
+        print("2. Visualizza File")
+        print(" ")
+        sel=input("Inserisci il numero del comando da eseguire ")
+        if sel=='1':
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -329,24 +341,37 @@ while True:
                 tS = SenderAll(msg, listaS)
                 tS.run()
 
-        elif sel=="2":
-        elif sel=="3":
-        elif sel=="4":
-        elif sel=="5":
+        elif sel=='2':
+            # Ottengo la lista dei file dal database
+            lst = database.listFile()
+
+            # Visualizzo la lista dei file
+            if len(lst) > 0:
+                print("Scelta SessionID        MD5                                        Nome")
+                for i in range(0,len(lst)):
+                    print(str(i) + "   " + lst[i][0] + " " + lst[i][2]+" "+lst[i][1])
+
+            else:
+                print("Non ci sono file nel database")
+
         else:
             print("Commando Errato, attesa nuovo comando ")
-    else:
-        # Menu Peer
-        print("1. Collegati a supernodo")
-        print("2. Aggiungi Peer")
-        print("3. Aggiungi SuperNodo")
-        print("3. Aggiungi File")
-        print("3. Rimuovi File")
-        print("4. Visualizza File")
-        print("5. Visualizza Vicini")
-        sel=input("Inserisci il numero del comando da eseguire\n")
 
-        if sel=="1":
+else:
+    #Non sono un peer
+    superNodo=False
+    print("Menu del peer")
+    # menu del peer normale
+    while True:
+        print("1. Ricerca Supernodo")
+        print("2. Aggiungi File")
+        print("3. Rimuovi File")
+        print("4. Ricerca File")
+        print("5. Logout")
+        print("6. Visualizza File")
+        print(" ")
+        sel=input("Inserisci il numero del comando da eseguire ")
+        if sel=='1':
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -394,167 +419,65 @@ while True:
                 except Exception as e:
                     print(e)
 
+        elif sel=='2':
+            if sessionId!='':
+                sel=input('Inserici nome file da aggiungere ')
+                md5=Utility.generateMd5(Utility.PATHDIR+sel)
+                name=sel.ljust(100,' ')
+                database.addFile(sessionId,name,md5)
+                msg='ADFF'+sessionId+md5+name
+                t=Sender(msg,ipSuperNodo,int(portSuperNodo))
+                t.run()
+
+        elif sel=='3':
+            if sessionId!='':
+                # Ottengo la lista dei file dal database
+                lst = database.listFileForSessionId(sessionId)
+
+                # Visualizzo la lista dei file
+                if len(lst) > 0:
+                    print("Scelta  MD5                                        Nome")
+                    for i in range(0,len(lst)):
+                        print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
+
+                    # Chiedo quale file rimuovere
+                    i = -1
+                    while i not in range(0, len(lst)):
+                        i = int(input("Scegli il file da cancellare "))
+
+                    # Elimino il file
+                    database.removeFile(sessionId,lst[i][0])
+                    print("Operazione completata")
+                else:
+                    print("Non ci sono file nel database")
+                    True
+
+                msg='DEFF'+sessionId+md5+name
+                t=Sender(msg,ipSuperNodo,int(portSuperNodo))
+                t.run()
+        elif sel=='4':
+            True
+            # TODO ricerca di un file al supernodo
+        elif sel=='5':
+            msg='LOGO'+sessionId
+            t=Sender(msg,ipSuperNodo,int(portSuperNodo))
+            t.run()
+
+        elif sel=='6':
+            # Ottengo la lista dei file dal database
+            lst = database.listFileForSessionId()
+
+            # Visualizzo la lista dei file
+            if len(lst) > 0:
+                print("Scelta MD5                                        Nome")
+                for i in range(0,len(lst)):
+                    print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
+
+            else:
+                print("Non ci sono file nel database")
 
         else:
-            print("Commando Errato, nessun supernodo selezionato")
+            print("Commando Errato, attesa nuovo comando ")
 
 
-# i = db.findFile(md5="1"*32)
-# print("valore i: "+i[0][0])
-
-#if not os.path.exists(pathDir):
-#    os.makedirs(pathDir)
-
-'''
-while True:
-    print("1. Ricerca")
-    print("2. Aggiorna Vicini")
-    print("3. Aggiungi File")
-    print("4. Rimuovi File")
-    print("5. Visualizza File")
-    print("6. Visualizza Vicini")
-    print("7. Aggiungi Vicino")
-    print(" ")
-    sel=input("Inserisci il numero del comando da eseguire ")
-    if sel=="1":
-        sel=input("Inserisci stringa da ricercare ")
-        while len(sel)>20:
-            sel=input("Stringa Troppo Lunga,reinserisci ")
-        pktID=Utility.generateId(16)
-        ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
-        port='{:0>5}'.format(Utility.PORT)
-        ttl='{:0>2}'.format(5)
-        search=sel.ljust(20,' ')
-        msg="QUER"+pktID+ip+port+ttl+search
-        database.addPkt(pktID)
-        numFindFile = 0
-        listFindFile = []
-        lista=database.listClient()
-        if len(lista)>0:
-            t1 = SenderAll(msg, lista)
-            t1.run()
-
-        # Visualizzo le possibili scelte
-        print("Scelta  PEER                                                        MD5                       Nome")
-
-        # Chiedo quale file scaricare
-        i = -1
-        while i not in range(0, numFindFile +1):
-            i = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla)\n"))
-            if database.checkPkt(pktID) == False:
-                break
-
-        if numFindFile == 0:
-            print ("Nessun risultato di ricerca ricevuto")
-
-        elif i > 0:
-            i = i - 1;
-            ipp2p = listFindFile[i][1]
-            pp2p = listFindFile[i][2]
-            md5file = listFindFile[i][3]
-            filename = str(listFindFile[i][4]).strip()
-
-            try:
-                t1 = Downloader(ipp2p, pp2p, md5file, filename)
-                t1.run()
-            except Exception as e:
-                print(e)
-
-    elif sel=="2":
-        listaNear=database.listClient()
-        if len(listaNear)>0:
-            pktID=Utility.generateId(16)
-            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
-            port='{:0>5}'.format(Utility.PORT)
-            ttl='{:0>2}'.format(2)
-            msg="NEAR"+pktID+ip+port+ttl
-            database.addPkt(pktID)
-            database.removeAllClient()
-            t1 = SenderAll(msg, listaNear)
-            t1.run()
-
-    elif sel=="3":
-
-        # Rimuovo i file presenti al momento nel database
-        database.removeAllFile()
-
-        #Ottengo la lista dei file dalla cartella corrente
-        lst = os.listdir(Utility.PATHDIR)
-
-        #Inserisco i file nel database
-        if len(lst) > 0:
-            for file in lst:
-                database.addFile(Utility.generateMd5(Utility.PATHDIR+file), file)
-            print("Operazione completata")
-        else:
-            print("Non ci sono file nella directory")
-
-    elif sel=="4":
-
-        # Ottengo la lista dei file dal database
-        lst = database.listFile()
-
-        # Visualizzo la lista dei file
-        if len(lst) > 0:
-            print("Scelta  MD5                                        Nome")
-            for i in range(0,len(lst)):
-                print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
-
-            # Chiedo quale file rimuovere
-            i = -1
-            while i not in range(0, len(lst)):
-                i = int(input("Scegli il file da cancellare "))
-
-            # Elimino il file
-            database.removeFile(lst[i][0])
-            print("Operazione completata")
-        else:
-            print("Non ci sono file nel database")
-
-    elif sel=="5":
-
-        # Ottengo la lista dei file dal database
-        lst = database.listFile()
-
-        # Visualizzo la lista dei file
-        if len(lst) > 0:
-            print("MD5                                        Nome")
-            for file in lst:
-                print(file[0] + " " + file[1])
-        else:
-            print("Non ci sono file nel database")
-
-    elif sel=="6":
-        lista=database.listClient()
-        print(" ")
-        print("IP e PORTA")
-        for i in range(0,len(lista)):
-            print("IP"+str(i)+" "+lista[i][0]+" "+lista[i][1])
-
-    elif sel=="7":
-        sel=input("Inserici Ipv4 ")
-        t=sel.split('.')
-        ipv4=""
-        ipv4=ipv4+'{:0>3}'.format(t[0])+'.'
-        ipv4=ipv4+'{:0>3}'.format(t[1])+'.'
-        ipv4=ipv4+'{:0>3}'.format(t[2])+'.'
-        ipv4=ipv4+'{:0>3}'.format(t[3])+'|'
-        sel=input("Inserici Ipv6 ")
-        t=sel.split(':')
-        ipv6=""
-        ipv6=ipv6+'{:0>4}'.format(t[0])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[1])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[2])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[3])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[4])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[5])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[6])+':'
-        ipv6=ipv6+'{:0>4}'.format(t[7])
-        sel=input("Inserici Porta ")
-        port='{:0>5}'.format(int(sel))
-        ip=ipv4+ipv6
-        database.addClient(ip,port)
-    else:
-        print("Commando Errato, attesa nuovo comando ")
-'''
 

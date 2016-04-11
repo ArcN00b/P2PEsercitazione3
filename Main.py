@@ -11,7 +11,13 @@ from Utility import *
 global database
 global numFindFile
 global listFindFile
-global superNodo
+global numFindSNode
+global listFindSNode
+
+global superNodo # Indica se il programma in esecuzione e' un SuperNodo o un Peer
+global ipSuperNodo # Indica l'ip del SuperNodo a cui il Peer e' collegato
+global portSuperNodo # Indica la porta del SuperNodo a cui il Peer e' collegato
+global sessionId # Indica il sessionId del Peer
 
 class Peer:
 
@@ -188,7 +194,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     listFindFile.append(fields)
                     print(str(numFindFile) + " " + ipServer + " " + md5file + " " + filename)'''
 
-            # Gestisco arrivo pacchetto supre
+            # Gestisco arrivo pacchetto supe
             elif command=="SUPE":
                 pkID=fields[0]
                 if database.checkPkt(pkID)==False:
@@ -205,17 +211,38 @@ class ReceiveHandler(asyncore.dispatcher):
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
-                        lista=database.listClient()
-                        if len(lista)>0:
-                            t1 = SenderAll(msg,lista )
-                            t1.run()
+                        listaP=database.listPeer()
+                        if len(listaP)>0:
+                            tP = SenderAll(msg,listaP )
+                            tP.run()
+                        listaS=database.listSuperNode()
+                        if len(listaS)>0:
+                            tS = SenderAll(msg,listaS )
+                            tS.run()
 
             elif command=="ASUP":
+                # TODO completare metodo ASUP simile a AQUE
                 pkID=fields[0]
-                ip=fields[1]
-                port=fields[2]
-                if database.checkPkt(pkID)==True:
+                if superNodo==True and database.checkPkt(pkID)==True:
+                    ip=fields[1]
+                    port=fields[2]
                     database.addSuperNode(ip,port)
+                else:
+                    # TODO controllare "fields not in numFindSNode"
+                    if database.checkPkt(pkID)==True and fields not in numFindSNode:
+                        global numFindSNode
+                        numFindSNode+=1
+                        ipSuperNodo = fields[1]
+                        portSuperNodo = fields[2]
+                        listFindSNode.append(fields)
+                        print(str(numFindSNode) + " " + ipSuperNodo + " " + portSuperNodo)
+
+            elif command=="LOGI":
+
+
+
+            elif command=="ALGI":
+
 
             else:
                 print("ricevuto altro")
@@ -240,9 +267,13 @@ class ReceiveHandler(asyncore.dispatcher):
 
 numFindFile=0
 listFindFile=[]
+numFindSNode=0
+listFindSNode=[]
+
 database = ManageDB()
 # TODO completare con la lista dei near iniziali
-database.addClient(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
+database.addSuperNode(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
+#database.addClient(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
 #database.addClient(ip="172.030.007.002|fc00:0000:0000:0000:0000:0000:0007:0002",port="3000")
 
 #database.addFile("1"*32, "live brixton.jpg")
@@ -265,6 +296,85 @@ else:
     superNodo=False
     print("Menu del peer")
     #Va scritto il menu del peer normale
+
+while True:
+    # Menu SuperNodo
+    if superNodo==True:
+        print("1. Ricerca Supernodi")
+        print("2. Aggiungi SuperNodo")
+        print("3. Visualizza File")
+        print("4. Visualizza Vicini")
+        sel=input("Inserisci il numero del comando da eseguire\n")
+
+        if sel=="1":
+        elif sel=="2":
+        elif sel=="3":
+        elif sel=="4":
+        elif sel=="5":
+        else:
+            print("Commando Errato, attesa nuovo comando ")
+    else:
+        # Menu Peer
+        print("1. Collegati a supernodo")
+        print("2. Aggiungi Peer")
+        print("3. Aggiungi SuperNodo")
+        print("3. Aggiungi File")
+        print("3. Rimuovi File")
+        print("4. Visualizza File")
+        print("5. Visualizza Vicini")
+        sel=input("Inserisci il numero del comando da eseguire\n")
+
+        if sel=="1":
+            pktID=Utility.generateId(16)
+            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
+            port='{:0>5}'.format(Utility.PORT)
+            ttl='{:0>2}'.format(4)
+            msg="SUPE"+pktID+ip+port+ttl
+            database.addPkt(pktID)
+            numFindSNode = 0
+            listFindSNode = []
+
+            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
+            listaP=database.listPeer()
+            if len(listaP)>0:
+                tP = SenderAll(msg, listaP)
+                tP.run()
+
+            # Invio la richiesta a tutti i SuperNodi
+            listaS=database.listSuperNode()
+            if len(listaS)>0:
+                tS = SenderAll(msg, listaS)
+                tS.run()
+
+            # Visualizzo le possibili scelte
+            print("Scegli il supernodo a cui vuoi collegarti")
+
+            i = -1
+            while i not in range(0, numFindSNode +1):
+                i = int(input("Scegli il supernodo a cui vuoi collegarti\n"))
+                if database.checkPkt(pktID) == False:
+                    break
+
+            if numFindSNode == 0:
+                print ("Nessun supernodo trovato")
+
+            elif i > 0:
+                i = i - 1;
+                ipDest = listFindSNode[i][1]
+                portDest = listFindSNode[i][2]
+                msg="LOGI"+ip+port
+                ipSuperNodo = ipDest
+                portSuperNodo = portDest
+
+                try:
+                    t1 = Sender(msg, ipDest, portDest)
+                    t1.run()
+                except Exception as e:
+                    print(e)
+
+
+        else:
+            print("Commando Errato, nessun supernodo selezionato")
 
 
 # i = db.findFile(md5="1"*32)

@@ -202,7 +202,7 @@ class ReceiveHandler(asyncore.dispatcher):
                         t.run()
 
                     #decremento il ttl e controllo se devo inviare
-                    # TODO la SUPE va divulgata solo agli altri super o a tutti i peer connessi?
+                    # TODO la SUPE va divulgata ai supernodi e ai peer
                     # TODO divulgare la SUPE
                     '''
                     ttl = int(fields[3])-1

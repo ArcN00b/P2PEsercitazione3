@@ -51,7 +51,7 @@ if sel=='s':
             if len(listaS)>0:
                 tS = SenderAll(msg, listaS)
                 tS.run()
-
+        # Visualizza File del supernodo
         elif sel=='2':
             # Ottengo la lista dei file dal database
             lst = Utility.database.listFile()
@@ -126,21 +126,27 @@ else:
 
                 try:
                     t1 = Sender(msg, ipDest, portDest)
-                    t1.run()
+                    t1.start()
                 except Exception as e:
                     print(e)
 
+        #Aggiunta di un file
         elif sel=='2':
+            #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
             if Utility.sessionId!='':
                 sel=input('Inserici nome file da aggiungere ')
+                #genero md5
                 md5=Utility.generateMd5(Utility.PATHDIR+sel)
                 name=sel.ljust(100,' ')
+                #Aggiungo il file al mio database
                 Utility.database.addFile(Utility.sessionId,name,md5)
+                #Creo il messaggio da inviare al supernodo
                 msg='ADFF'+Utility.sessionId+md5+name
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.run()
-
+                t.start()
+        # Rimozione di un file
         elif sel=='3':
+            #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
             if Utility.sessionId!='':
                 # Ottengo la lista dei file dal database
                 lst = Utility.database.listFileForSessionId(Utility.sessionId)
@@ -163,18 +169,22 @@ else:
                     print("Non ci sono file nel database")
                     True
 
+                #genero il messaggio da mandare al supernodo con il file eliminato
                 md5=lst[i][0]
                 name=lst[i][1]
                 msg='DEFF'+Utility.sessionId+md5+name
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.run()
+                t.start()
         elif sel=='4':
             True
             # TODO ricerca di un file al supernodo
         elif sel=='5':
-            msg='LOGO'+Utility.sessionId
-            t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-            t.run()
+            #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
+            if Utility.sessionId!='':
+                # genero e invio il messaggio di logout al supernodo
+                msg='LOGO'+Utility.sessionId
+                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                t.start()
 
         elif sel=='6':
             # Ottengo la lista dei file dal database
@@ -190,6 +200,4 @@ else:
 
         else:
             print("Commando Errato, attesa nuovo comando ")
-
-
 

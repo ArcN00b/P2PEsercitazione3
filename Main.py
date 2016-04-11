@@ -199,43 +199,44 @@ class ReceiveHandler(asyncore.dispatcher):
                 pkID=fields[0]
                 if database.checkPkt(pkID)==False:
                     database.addPkt(pkID)
-                    #se sono un supernodo rispondo con asup
+                    # Se sono un supernodo rispondo con asup
                     if superNodo:
                         ip=Utility.MY_IPV4+"|"+Utility.MY_IPV6
                         port='{:0>5}'.format(Utility.PORT)
                         msgRet="ASUP"+pkID+ip+port
                         t=Sender(msgRet,fields[1],fields[2])
                         t.run()
-                    #decremento il ttl e controllo se devo inviare
+                    # Decremento il ttl e controllo se devo inviare
                     ttl = int(fields[3])-1
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
                         listaP=database.listPeer()
                         if len(listaP)>0:
-                            tP = SenderAll(msg,listaP )
+                            tP = SenderAll(msg,listaP)
                             tP.run()
                         listaS=database.listSuperNode()
                         if len(listaS)>0:
-                            tS = SenderAll(msg,listaS )
+                            tS = SenderAll(msg,listaS)
                             tS.run()
 
             elif command=="ASUP":
-                # TODO completare metodo ASUP simile a AQUE
                 pkID=fields[0]
+                ip=fields[1]
+                port=fields[2]
                 if superNodo==True and database.checkPkt(pkID)==True:
-                    ip=fields[1]
-                    port=fields[2]
                     database.addSuperNode(ip,port)
                 else:
-                    # TODO controllare "fields not in numFindSNode"
-                    if database.checkPkt(pkID)==True and fields not in numFindSNode:
+                    findPeer=False
+                    for i in range(0,len(listFindSNode)):
+                        if listFindSNode[i][1]==ip and listFindSNode[i][2]==port:
+                            findPeer=True
+
+                    if database.checkPkt(pkID)==True and findPeer:
                         global numFindSNode
                         numFindSNode+=1
-                        ipSuperNodo = fields[1]
-                        portSuperNodo = fields[2]
                         listFindSNode.append(fields)
-                        print(str(numFindSNode) + " " + ipSuperNodo + " " + portSuperNodo)
+                        print(str(numFindSNode) + " " + ip + " " + port)
 
             elif command=="LOGI":
 
@@ -307,6 +308,27 @@ while True:
         sel=input("Inserisci il numero del comando da eseguire\n")
 
         if sel=="1":
+            pktID=Utility.generateId(16)
+            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
+            port='{:0>5}'.format(Utility.PORT)
+            ttl='{:0>2}'.format(4)
+            msg="SUPE"+pktID+ip+port+ttl
+            database.addPkt(pktID)
+            numFindSNode = 0
+            listFindSNode = []
+
+            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
+            listaP=database.listPeer()
+            if len(listaP)>0:
+                tP = SenderAll(msg, listaP)
+                tP.run()
+
+            # Invio la richiesta a tutti i SuperNodi
+            listaS=database.listSuperNode()
+            if len(listaS)>0:
+                tS = SenderAll(msg, listaS)
+                tS.run()
+
         elif sel=="2":
         elif sel=="3":
         elif sel=="4":

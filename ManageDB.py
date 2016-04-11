@@ -303,13 +303,40 @@ class ManageDB:
             if conn:
                 conn.rollback()
 
-            raise Exception("Errore - listSuperNode: %s:" % e.args[0])
+            raise Exception("Errore - listFileForSessionId: %s:" % e.args[0])
         finally:
             # Chiudo la connessione
             if conn:
                 conn.close()
             if count is not None:
                 return count
+
+    # Metodo ritorna tutta la tabella files
+    def listFile(self):
+        count=None
+        try:
+            # Connessione
+            conn=sqlite3.connect("data.db")
+            c=conn.cursor()
+
+            c.execute("SELECT * FROM FILES")
+            count=c.fetchall()
+
+            conn.commit()
+
+        except sqlite3.Error as e:
+            # Gestisco l'eccezione
+            if conn:
+                conn.rollback()
+
+            raise Exception("Errore - listFile: %s:" % e.args[0])
+        finally:
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+            if count is not None:
+                return count
+
 
 
 

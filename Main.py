@@ -345,7 +345,26 @@ if sel=='s':
             True
             # TODO visualizzare elenco peer connessi
         elif sel=='2':
-            True
+            # Ottengo la lista dei file dal database
+            lst = database.listFileForSessionId(sessionId)
+
+            # Visualizzo la lista dei file
+            if len(lst) > 0:
+                print("Scelta  MD5                                        Nome")
+                for i in range(0,len(lst)):
+                    print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
+
+                # Chiedo quale file rimuovere
+                i = -1
+                while i not in range(0, len(lst)):
+                    i = int(input("Scegli il file da cancellare "))
+
+                # Elimino il file
+                database.removeFile(sessionId,lst[i][0])
+                print("Operazione completata")
+            else:
+                print("Non ci sono file nel database")
+
             # TODO visualizzare elenco file caricati ne supernodo
 
 else:

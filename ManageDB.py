@@ -435,20 +435,81 @@ class ManageDB:
 
 
 
-
-
-
-
-
 # SUPERNODES:   IP          PORT
 # PEERS:        SESSIONID   IP      PORT
 # FILES:        SESSIONID   NAME    MD5
 # PACKETS:      ID      DATE
-'''
+
 manager = ManageDB()
 
-print("Aggiungo peer")
+print("Aggiungo Peer")
 manager.addPeer("123", "1.1.1.1", "3000")
+manager.addPeer("456", "1.1.1.2", "3000")
+manager.addPeer("789", "1.1.1.3", "3000")
+print("Lista Peer")
+all_rows = manager.listPeer()
+for row in all_rows:
+    print('{0} {1} {2}'.format(row[0],row[1],row[2]))
+print("")
 
-print("Aggiungo supernodo")
-manager.addSuperNode("10.10.10.10", "80")'''
+
+print("Aggiungo SuperNodo")
+manager.addSuperNode("10.10.10.10", "80")
+manager.addSuperNode("20.20.20.20", "80")
+print("Lista SuperNodi")
+all_rows = manager.listSuperNode()
+for row in all_rows:
+    print('{0} {1}'.format(row[0],row[1]))
+print("")
+
+
+print("Metodo findPeer flag 1")
+all_rows = manager.findPeer(0,"1.1.1.3","3000",1)
+for row in all_rows:
+    print('{0}'.format(row[0]))
+print("")
+
+
+print("Metodo findPeer flag 2")
+all_rows = manager.findPeer("123",0,0,2)
+for row in all_rows:
+    print('{0} {1}'.format(row[0],row[1]))
+print("")
+
+
+print("Aggiungo File")
+manager.addFile("123","pippo","1111")
+manager.addFile("123","pluto","2222")
+manager.addFile("456","pluto2","2222")
+manager.addFile("456","paperino","3333")
+print("Lista File")
+all_rows = manager.listFile()
+for row in all_rows:
+    print('{0} {1} {2}'.format(row[0],row[1],row[2]))
+print("")
+
+
+print("Rimuovo File")
+manager.removeFile("123","2222")
+print("Lista File")
+all_rows = manager.listFile()
+for row in all_rows:
+    print('{0} {1} {2}'.format(row[0],row[1],row[2]))
+print("")
+
+
+print("Lista File da SessionID")
+all_rows = manager.listFileForSessionId("456")
+for row in all_rows:
+    print('{0} {1}'.format(row[0],row[1]))
+print("")
+
+
+print("Rimuovo tutti File da SessionID")
+manager.removeAllFileForSessionId("456")
+print("Lista File")
+all_rows = manager.listFile()
+for row in all_rows:
+    print('{0} {1} {2}'.format(row[0],row[1],row[2]))
+print("")
+

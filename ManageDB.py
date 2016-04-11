@@ -177,10 +177,10 @@ class ManageDB:
             c=conn.cursor()
 
             if flag==1:
-                c.execute("SELECT SESSIONID FROM PEER WHERE IP=:INDIP AND PORT=:PORTA", {"INDIP": ip, "PORTA": port})
+                c.execute("SELECT SESSIONID FROM PEERS WHERE IP=:INDIP AND PORT=:PORTA", {"INDIP": ip, "PORTA": port})
                 count = c.fetchall()
             elif flag==2:
-                c.execute("SELECT IP,PORT FROM PEER WHERE SESSIONID=:SID", {"SID": sessionId})
+                c.execute("SELECT IP,PORT FROM PEERS WHERE SESSIONID=:SID", {"SID": sessionId})
                 count = c.fetchall()
 
             conn.commit()
@@ -337,6 +337,32 @@ class ManageDB:
             if count is not None:
                 return count
 
+    # Metodo per ricerca nome file da sessionId e Md5
+    def findFile(self,sessionId,Md5):
+        count=None
+        try:
+            # Connessione
+            conn=sqlite3.connect("data.db")
+            c=conn.cursor()
+
+            c.execute("SELECT NAME FROM FILES WHERE SESSIONID=:SID AND MD5=:M",{"SID":sessionId,"M":Md5})
+            count=c.fetchall()
+
+            conn.commit()
+
+        except sqlite3.Error as e:
+            # Gestisco l'eccezione
+            if conn:
+                conn.rollback()
+
+            raise Exception("Errore - listFileForSessionId: %s:" % e.args[0])
+        finally:
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+            if count is not None:
+                return count
+
 
 
 
@@ -347,11 +373,11 @@ class ManageDB:
 # PEERS:        SESSIONID   IP      PORT
 # FILES:        SESSIONID   NAME    MD5
 # PACKETS:      ID      DATE
-
+'''
 manager = ManageDB()
 
 print("Aggiungo peer")
 manager.addPeer("123", "1.1.1.1", "3000")
 
 print("Aggiungo supernodo")
-manager.addSuperNode("10.10.10.10", "80")
+manager.addSuperNode("10.10.10.10", "80")'''

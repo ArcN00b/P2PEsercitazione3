@@ -285,6 +285,34 @@ class ManageDB:
             if count is not None:
                 return count[0][0]
 
+    # Metodo per avere la lista di file per un sessionID
+    def listFileForSessionId(self,sessionId):
+        count=None
+        try:
+            # Connessione
+            conn=sqlite3.connect("data.db")
+            c=conn.cursor()
+
+            c.execute("SELECT MD5,NAME FROM FILES WHERE SESSIONID=:SID",{"SID":sessionId})
+            count=c.fetchall()
+
+            conn.commit()
+
+        except sqlite3.Error as e:
+            # Gestisco l'eccezione
+            if conn:
+                conn.rollback()
+
+            raise Exception("Errore - listSuperNode: %s:" % e.args[0])
+        finally:
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+            if count is not None:
+                return count
+
+
+
 
 
 

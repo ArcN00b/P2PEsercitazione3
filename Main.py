@@ -13,6 +13,8 @@ global numFindFile
 global listFindFile
 global superNodo
 global sessionId
+global ipSuperNodo
+global portaSuperNodo
 
 class Peer:
 
@@ -211,8 +213,14 @@ class ReceiveHandler(asyncore.dispatcher):
             # Procedura ALGI
             elif command=='ALGI':
                 if not superNodo:
-                    global sessionId
-                    sessionId=fields[0]
+                    s='0'*16
+                    ssID=fields[0]
+                    if ssID==s:
+                        ipSuperNodo=''
+                        portaSuperNodo=''
+                    else:
+                        global sessionId
+                        sessionId=ssID
 
             #Procedura ADFF
             elif command=='ADFF':
@@ -306,6 +314,9 @@ class ReceiveHandler(asyncore.dispatcher):
 
 numFindFile=0
 listFindFile=[]
+sessionId=''
+ipSuperNodo=''
+portaSuperNodo=''
 database = ManageDB()
 # TODO completare con la lista dei near iniziali
 database.addClient(ip="172.030.007.001|fc00:0000:0000:0000:0000:0000:0007:0001",port="3000")
@@ -354,17 +365,49 @@ else:
             True
             # TODO ricerca supernodo e login al supernodo selezionato
         elif sel=='2':
-            True
-            # TODO aggiugi un file al supernodo
+            if sessionId!='':
+                sel=input('Inserici nome file da aggiungere ')
+                md5=Utility.generateMd5(Utility.PATHDIR+sel)
+                name=sel.ljust(100,' ')
+                database.addFile(sessionId,name,md5)
+                msg='ADFF'+sessionId+md5+name
+                t=Sender(msg,ipSuperNodo,int(portaSuperNodo))
+                t.run()
         elif sel=='3':
-            True
-            # TODO rimuovi un file dal supernodo
+            if sessionId!='':
+                # Ottengo la lista dei file dal database
+                lst = database.listFileForSessionId(sessionId)
+
+                # Visualizzo la lista dei file
+                if len(lst) > 0:
+                    print("Scelta  MD5                                        Nome")
+                    for i in range(0,len(lst)):
+                        print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
+
+                    # Chiedo quale file rimuovere
+                    i = -1
+                    while i not in range(0, len(lst)):
+                        i = int(input("Scegli il file da cancellare "))
+
+                    # Elimino il file
+                    database.removeFile(sessionId,lst[i][0])
+                    print("Operazione completata")
+                else:
+                    print("Non ci sono file nel database")
+                    True
+
+                msg='DEFF'+sessionId+md5+name
+                t=Sender(msg,ipSuperNodo,int(portaSuperNodo))
+                t.run()
         elif sel=='4':
             True
             # TODO ricerca di un file al supernodo
         elif sel=='5':
-            True
-            # TODO logout dal supernodo
+            msg='LOGO'+sessionId
+            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
+            port='{:0>5}'.format(Utility.PORT)
+            t=Sender(msg,ip,port)
+            t.run()
 
 
 # i = db.findFile(md5="1"*32)

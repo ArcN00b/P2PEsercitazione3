@@ -12,6 +12,7 @@ global database
 global numFindFile
 global listFindFile
 global superNodo
+global sessionId
 
 class Peer:
 
@@ -187,6 +188,52 @@ class ReceiveHandler(asyncore.dispatcher):
                     filename = str(fields[4]).strip()
                     listFindFile.append(fields)
                     print(str(numFindFile) + " " + ipServer + " " + md5file + " " + filename)'''
+
+            #Procedura LOGI
+            elif command=='LOGI':
+                if superNodo:
+                    ip=fields[0]
+                    port=fields[1]
+                    try:
+                        l=database.findPeer('',ip,port,1)
+                        if len(l)>0:
+                            ssID=l[0][0]
+                        else:
+                            ssID=Utility.generateId(16)
+                        database.addPeer(ssID,ip,port)
+                    except Exception as e:
+                        ssID='0'*16
+
+                    msgRet='ALGI'+ssID
+                    t=Sender(msgRet,ip,port)
+                    t.run()
+
+            # Procedura ALGI
+            elif command=='ALGI':
+                if not superNodo:
+                    global sessionId
+                    sessionId=fields[0]
+
+            #Procedura ADFF
+            elif command=='ADFF':
+                if not superNodo:
+                    ssID=fields[0]
+                    md5=fields[1]
+                    name=fields[2]
+                    l=database.findPeer(sessionId,'','',2)
+                    if len(l)>0:
+                        database.addFile(ssID,name,md5)
+
+            # Procedura DEFF
+            elif command=='DEFF':
+                if not superNodo:
+                    ssID=fields[0]
+                    md5=fields[1]
+                    l=database.findPeer(ssID,'','',2)
+                    if len(l)>0:
+                        database.removeFile(ssID,md5)
+
+
 
             # Gestisco arrivo pacchetto supre
             elif command=="SUPE":

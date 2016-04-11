@@ -51,7 +51,7 @@ class Parser:
             fields[0] = data[4:20] # SessionID[16B]
 
         # Parsing ALOG
-        elif command == 'ALOG':
+        elif command == 'ALGO':
             fields[0] = data[4:7] # Num Delete[3B]
 
         # Parsing QUER
@@ -144,3 +144,39 @@ class Parser:
             print('Errore' + data + '\n')
 
     '''
+'''
+# Testing
+from Parser import *
+
+ip='127.000.000.001|fc00:0000:0000:0000:0000:0000:0007:0001'
+id='1234567890123456'
+port='03000'
+ttl='99'
+md5='00000000000000001234567890123456'
+ricerca='pippo'+' '*(20-len('pippo'))
+name='paperino'+' '*(100-len('paperino'))
+
+# Check Supe
+comand,campi=Parser.parse("SUPE"+id+ip+port+ttl)
+#Check asup
+comand,campi=Parser.parse("ASUP"+id+ip+port)
+#Check logi
+comand,campi=Parser.parse("LOGI"+ip+port)
+#Check alog
+comand,campi=Parser.parse("ALGI"+id)
+#Check Adff
+comand,campi=Parser.parse("ADFF"+id+md5+name)
+#Check deff
+comand,campi=Parser.parse("DEFF"+id+md5)
+#Check LOGO
+comand,campi=Parser.parse("LOGO"+id)
+#check ALOG
+comand,campi=Parser.parse("ALGO001")
+#check QUER
+comand,campi=Parser.parse("QUER"+id+ip+port+ttl+ricerca)
+# check AQUE
+comand,campi=Parser.parse("AQUE"+id+ip+port+md5+name)
+
+True
+True
+'''

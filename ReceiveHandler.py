@@ -352,7 +352,6 @@ class ReceiveHandler(asyncore.dispatcher):
                             tS.run()
 
             elif command=="ASUP":
-                # TODO aggiornare supernodi che hanno risposto ad una asup, se sei supernodo
                 pkID=fields[0]
                 ip=fields[1]
                 port=fields[2]

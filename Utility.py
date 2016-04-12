@@ -71,7 +71,7 @@ class Utility:
         t = stringa.find('|')
         if t != -1:
 
-            ''' Modifico così questa funzione poichè se usiamo una connect di un indirizzo come 127.000.000.001
+            ''' Modifico così questa funzione poiche se usiamo una connect di un indirizzo come 127.000.000.001
                 purtroppo da errore, così trasformo l'ip sopra in 127.0.0.1'''
             ipv4 = ''
             tmp = stringa[0:t].split('.')

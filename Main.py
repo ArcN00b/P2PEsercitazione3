@@ -84,6 +84,7 @@ else:
         sel=input("Inserisci il numero del comando da eseguire ")
         if sel=='1':
             # TODO se sei gia connesso eseguire la procedura di LOGO prima del nuovo LOGI
+            # TODO aggiornare supernodi nel database se sono peer
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -106,7 +107,7 @@ else:
                 tS.run()
 
             # Visualizzo le possibili scelte
-            print("Scegli il supernodo a cui vuoi collegarti")
+            #print("Scegli il supernodo a cui vuoi collegarti")
 
             i = -1
             while i not in range(0, Utility.numFindSNode +1):
@@ -213,7 +214,7 @@ else:
                     while sel not in range(0, len(Utility.listFindFile) + 1):
                         sel = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla) "))
 
-                    # Ora devo visualizzare da chi scaricare il file (ricordando che quanti peer ha ogni md5 è nella listFindFile)
+                    # Ora devo visualizzare da chi scaricare il file (ricordando che quanti peer ha ogni md5 e nella listFindFile)
                     if sel > 0:
                         md5file = Utility.listFindFile[sel - 1][0]
                         filename = str(Utility.listFindFile[sel - 1][1]).strip()
@@ -233,7 +234,7 @@ else:
                         while sel not in range(0, len(Utility.listFindFile) + 1):
                             sel = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla) "))
                         
-                        # Se la selezione è maggiore di 0 e quindi voglio scaricare
+                        # Se la selezione e maggiore di 0 e quindi voglio scaricare
                         if sel > 0:
                             index = begin + sel - 1
                             ipp2p = Utility.listFindPeer[index][0]

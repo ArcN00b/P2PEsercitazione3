@@ -85,7 +85,7 @@ class Parser:
         elif command == 'ARET':
             fields[0] = data[4:10] #Num Chunk
 
-        # Se questo else viene eseguito significa che il comando ricevuto non è previsto
+        # Se questo else viene eseguito significa che il comando ricevuto non e previsto
         else:
             print('Errore durante il parsing del messaggio\n')
 
@@ -108,45 +108,45 @@ class Parser:
             error = True
             print('Errore, comando (' + command + ') non riconosciuto \n')
 
-        # Se il comando è QUER eseguo questi controlli tramite regex
+        # Se il comando e QUER eseguo questi controlli tramite regex
         if command == 'QUER' and not error:
             p = re.compile('[\dA-Z]{16}(\d{3}\.){3}\d{3}\|([\da-fA-F]{4}\:){7}[\da-fA-F]{4}\d{5}\d{2}[\da-zA-Z\.\ ]{20}$')
             if p.search(data) == None:
                 error = True
 
-        # Se il comando è AQUE eseguo questi controlli tramite regex
+        # Se il comando e AQUE eseguo questi controlli tramite regex
         elif command == 'AQUE' and not error:
             p = re.compile('[\dA-Z]{16}(\d{3}\.){3}\d{3}\|([\da-fA-F]{4}\:){7}[\da-fA-F]{4}\d{5}[\da-zA-Z]{32}[\da-zA-Z\.\ ]{100}$')
             if p.search(data) == None:
                 error = True
 
-        # Se il comando è NEAR eseguo questi controlli tramite regex
+        # Se il comando e NEAR eseguo questi controlli tramite regex
         elif command == 'NEAR' and not error:
             p = re.compile('[\dA-Z]{16}(\d{3}\.){3}\d{3}\|([\da-fA-F]{4}\:){7}[\da-fA-F]{4}\d{5}\d{2}$')
             if p.search(data) == None:
                 error = True
 
-        # Se il comando è ANEA eseguo questi controlli tramite regex
+        # Se il comando e ANEA eseguo questi controlli tramite regex
         elif command == 'ANEA' and not error:
             p = re.compile('[\dA-Z]{16}(\d{3}\.){3}\d{3}\|([\da-fA-F]{4}\:){7}[\da-fA-F]{4}\d{5}$')
             if p.search(data) == None:
                 error = True
 
-        # Se il comando è RETR eseguo questi controlli tramite regex
+        # Se il comando e RETR eseguo questi controlli tramite regex
         elif command == 'RETR' and not error:
             p = re.compile('[\da-zA-Z]{32}$')
             if p.search(data) == None:
                 error = True
 
-        # Se il comando è ARET suddivido data in questo modo
+        # Se il comando e ARET suddivido data in questo modo
         elif command == 'ARET' and not error:
             p = re.compile('\d{6}')
             if p.search(data) == None:
                 error = True
 
-        # Se questo else viene eseguito significa che il comando ricevuto non è previsto
+        # Se questo else viene eseguito significa che il comando ricevuto non e previsto
         if not error:
-            print('Il messaggio è ben formattato\n')
+            print('Il messaggio e ben formattato\n')
         else:
             print('Errore' + data + '\n')
 

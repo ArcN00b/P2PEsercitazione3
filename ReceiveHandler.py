@@ -64,7 +64,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     f = open(filename, 'rb')
                     r = f.read(chuncklen)
 
-                    # Finchè il file non termina
+                    # Finche il file non termina
                     while len(r) > 0:
 
                         # Invio la lunghezza del chunk
@@ -110,7 +110,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 result = [row for row in Utility.listResultFile if pktID in row]
                 Utility.listResultFile = [row for row in Utility.listResultFile if pktID not in row]
 
-                ''' Il formato delle righe di result è quello delle AQUE senza il "AQUE" quindi:
+                ''' Il formato delle righe di result e quello delle AQUE senza il "AQUE" quindi:
 
                 Result[i][0] = PKTID
                 Result[i][1] = IP
@@ -119,7 +119,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 Result[i][4] = FILENAME
 
                 Uso questo commento per non sbagliare i campi successivamente e per debug
-                MD5 list è pensata per avere in ogni riga MD5 NAME NPEER
+                MD5 list e pensata per avere in ogni riga MD5 NAME NPEER
                 '''
 
                 # Preparo le strutture dati per gestire l'invio dei risultati
@@ -130,13 +130,13 @@ class ReceiveHandler(asyncore.dispatcher):
 
                 # Suddivido i risultati per md5 diversi
                 for i in range(0,len(result)):
-                    # Controllo se l'md5 effettivamente è diverso
+                    # Controllo se l'md5 effettivamente e diverso
                     if result[i][3] not in md5List:
                         md5List.append([result[i][3], result[i][4], 0]) # MD5 NAME e NPEER
                         peerList.append(result[i][1], result[i][2])     # IP e PORT
                         numPeer = 1
 
-                        # Controllo nel resto dei risultati se è presente lo stesso MD5
+                        # Controllo nel resto dei risultati se e presente lo stesso MD5
                         for j in range(i+1, len(result)):
                             if md5List[numMd5][0] == result[j][3]:
                                 peerList.append(result[j][1], result[j][2])
@@ -177,7 +177,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     if not tmp[-3:].decode(errors='ignore').isnumeric():
                         raise Exception("Packet loss")
 
-                    # Salvo ciè che è stato ricavato in ListFindFile
+                    # Salvo cie che e stato ricavato in ListFindFile
                     Utility.listFindFile.append([tmp[:16].decode(), tmp[16:-3].decode(), int(tmp[-3:].decode())])
 
                     # Ottengo la lista dei peer che hanno lo stesso md5
@@ -192,7 +192,7 @@ class ReceiveHandler(asyncore.dispatcher):
                             if len(tmp) == 0:
                                 raise Exception("Socket close")
 
-                        # Salvo ciò che è stato ricavato in Peer List
+                        # Salvo ciò che e stato ricavato in Peer List
                         Utility.listFindPeer.append([tmp[:55].decode(), int(tmp[-5:].decode())])
 
             elif command == "QUER":
@@ -204,7 +204,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 ttl = fields[3]
                 name = fields[4]
 
-                # Controllo se il packetId è già presente se è presente non rispondo alla richiesta
+                # Controllo se il packetId e già presente se e presente non rispondo alla richiesta
                 # E non la rispedisco
                 if not Utility.database.checkPkt(pkID):
                     Utility.database.addPkt(pkID)
@@ -242,7 +242,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     ip=fields[0]
                     port=fields[1]
                     try:
-                        # se il peer è presente gli do il suo vecchio sessionId altrimenti uno nuovo
+                        # se il peer e presente gli do il suo vecchio sessionId altrimenti uno nuovo
                         l=Utility.database.findPeer('',ip,port,1)
                         if len(l)>0:
                             ssID=l[0][0]
@@ -360,7 +360,7 @@ class ReceiveHandler(asyncore.dispatcher):
                         if Utility.listFindSNode[i][1]==ip and Utility.listFindSNode[i][2]==port:
                             findPeer=True
 
-                    if Utility.database.checkPkt(pkID)==True and findPeer:
+                    if Utility.database.checkPkt(pkID)==True and not findPeer:
                         Utility.numFindSNode+=1
                         Utility.listFindSNode.append(fields)
                         print(str(Utility.numFindSNode) + " " + ip + " " + port)

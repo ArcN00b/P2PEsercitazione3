@@ -296,7 +296,6 @@ class ReceiveHandler(asyncore.dispatcher):
 
             # Procedura LOGO
             elif command=='LOGO':
-                # TODO rimuovere il peer dalla tabella
                 # solo il supernodo deve elaborare una richiesta logo
                 if Utility.superNodo:
                     ssID=fields[0]
@@ -306,7 +305,11 @@ class ReceiveHandler(asyncore.dispatcher):
                         # se il sessionId e presente rimuovo i suoi file e ritorno il messaggio ALGO
                         ip=l[0][0]
                         port=l[0][1]
+                        #cancello tutti i file di quel sessionId
                         canc=Utility.database.removeAllFileForSessionId(ssID)
+                        #cancello il peer dalla tabella dei peer
+                        Utility.database.removePeer(ssID)
+                        #Comunico al peer il messaggio di ritorno
                         msgRet='ALGO'+'{:0>3}'.format(canc)
                         t=Sender(msgRet,ip,port)
                         t.start()
@@ -349,6 +352,7 @@ class ReceiveHandler(asyncore.dispatcher):
                             tS.run()
 
             elif command=="ASUP":
+                # TODO aggiornare supernodi che hanno risposto ad una asup, se sei supernodo
                 pkID=fields[0]
                 ip=fields[1]
                 port=fields[2]

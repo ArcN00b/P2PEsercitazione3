@@ -83,9 +83,35 @@ class ManageDB:
             if conn:
                 conn.close()
 
+    #Metodo che rimuove un peer dato un sessionId
+    def removePeer(self,sessionId):
+        try:
+            # Creo la connessione al database e creo un cursore ad esso
+            conn = sqlite3.connect("data.db")
+            c = conn.cursor()
+
+            c.execute("SELECT COUNT(SESSIONID) FROM PEERS WHERE SESSIONID=:SID", {"SID": sessionId})
+            count = c.fetchall()
+
+            if count[0][0]!=0:
+                c.execute("DELETE FROM PEERS WHERE SESSIONID=:SID", {"SID": sessionId})
+                conn.commit()
+
+        except sqlite3.Error as e:
+
+            # Gestisco l'eccezione
+            if conn:
+                conn.rollback()
+
+            raise Exception("Errore - removePeer: %s:" % e.args[0])
+
+        finally:
+            # Chiudo la connessione
+            if conn:
+                conn.close()
+
     # Metodo che aggiunge un supernodo
     def addSuperNode(self, ip, port):
-
         try:
 
             # Creo la connessione al database e creo un cursore ad esso
@@ -242,8 +268,12 @@ class ManageDB:
             conn = sqlite3.connect("data.db")
             c = conn.cursor()
 
-            c.execute("DELETE FROM FILES WHERE SESSIONID=:SID AND MD5=:M", {"SID": sessionId, "M": Md5})
-            conn.commit()
+            c.execute("SELECT COUNT(SESSIONID) FROM FILES WHERE SESSIONID=:SID AND MD5=:M", {"SID": sessionId, "M": Md5})
+            count = c.fetchall()
+
+            if count[0][0]!=0:
+                c.execute("DELETE FROM FILES WHERE SESSIONID=:SID AND MD5=:M", {"SID": sessionId, "M": Md5})
+                conn.commit()
 
         except sqlite3.Error as e:
 

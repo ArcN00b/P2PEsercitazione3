@@ -16,8 +16,9 @@ class Utility:
     PORT=3000
     PATHDIR='/home/flavio/Scrivania/File/'
 
-    numFindFile = 0
+    listFindPeer = []
     listFindFile = []
+    listResultFile = []
     numFindSNode=0
     listFindSNode=[]
     superNodo=False # Indica se il programma in esecuzione e' un SuperNodo o un Peer

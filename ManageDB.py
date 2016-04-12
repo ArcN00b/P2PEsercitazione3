@@ -340,15 +340,19 @@ class ManageDB:
                 return count
 
     # Metodo per ricerca nome file da sessionId e Md5
-    def findFile(self,sessionId,Md5):
+    def findFile(self,sessionId,Md5,flag):
         count=None
         try:
             # Connessione
             conn=sqlite3.connect("data.db")
             c=conn.cursor()
 
-            c.execute("SELECT NAME FROM FILES WHERE SESSIONID=:SID AND MD5=:M",{"SID":sessionId,"M":Md5})
-            count=c.fetchall()
+            if flag == 1:
+                c.execute("SELECT NAME FROM FILES WHERE SESSIONID=:SID AND MD5=:M",{"SID":sessionId,"M":Md5})
+                count=c.fetchall()
+            elif flag == 2:
+                c.execute("SELECT NAME FROM FILES WHERE MD5=:M",{"M":Md5})
+                count=c.fetchall()
 
             conn.commit()
 
@@ -364,6 +368,31 @@ class ManageDB:
                 conn.close()
             if count is not None:
                 return count
+
+    # Metodo per ricercare l'md5 del file da stringa di ricerca
+    def findMd5(self, name):
+        try:
+
+            # Creo la connessione al database e creo un cursore ad esso
+            conn = sqlite3.connect("data.db")
+            c = conn.cursor()
+
+            # Cerca il file
+            c.execute("SELECT DISTINCT MD5 FROM FILES WHERE NAME LIKE '%" + name + "%' ")
+            conn.commit()
+
+            result = c.fetchall()
+            return result
+
+        except sqlite3.Error as e:
+
+            raise Exception("Errore - findFile: %s:" % e.args[0])
+
+        finally:
+
+            # Chiudo la connessione
+            if conn:
+                conn.close()
 
     # Metodo che aggiunge un packetId
     def addPkt(self, id):

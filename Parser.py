@@ -15,60 +15,67 @@ class Parser:
 
         # Parsing SUPE
         if command == 'SUPE':
-            fields[0] = data[4:20]    # PKTID[16B]
-            fields[1] = data[20:75]   # IPP2P[55B]
-            fields[2] = data[75:80]   # PP2P[5B]
-            fields[3] = data[80:82]   # TTL[2B]
+            fields[0] = data[4:20]      # PKTID[16B]
+            fields[1] = data[20:75]     # IPP2P[55B]
+            fields[2] = data[75:80]     # PP2P[5B]
+            fields[3] = data[80:82]     # TTL[2B]
 
         # Parsing ASUP
-        if command == 'ASUP':
-            fields[0] = data[4:20]    # PKTID[16B]
-            fields[1] = data[20:75]   # IPP2P[55B]
-            fields[2] = data[75:80]   # PP2P[5B]
+        elif command == 'ASUP':
+            fields[0] = data[4:20]      # PKTID[16B]
+            fields[1] = data[20:75]     # IPP2P[55B]
+            fields[2] = data[75:80]     # PP2P[5B]
 
         # Parsing LOGI
         elif command == 'LOGI':
-            fields[0] = data[4:59]    # IPP2P[55B]
-            fields[1] = data[59:64]   # PP2P[5B]
+            fields[0] = data[4:59]      # IPP2P[55B]
+            fields[1] = data[59:64]     # PP2P[5B]
 
         # Parsing ALGI
         elif command == 'ALGI':
-            fields[0] = data[4:20]    # SessionID[16B]
+            fields[0] = data[4:20]      # SessionID[16B]
 
         # Parsing ADFF
         elif command == 'ADFF':
-            fields[0] = data[4:20]    # SessionID[16B]
-            fields[1] = data[20:52]   # MD5[32B]
-            fields[2] = data[52:152]   # FileName[100B]
+            fields[0] = data[4:20]      # SessionID[16B]
+            fields[1] = data[20:52]     # MD5[32B]
+            fields[2] = data[52:152]    # FileName[100B]
 
         # Parsing DEFF
         elif command == 'DEFF':
-            fields[0] = data[4:20]  # SessioID[16B]
-            fields[1] = data[20:52] # MD5[32B]
+            fields[0] = data[4:20]      # SessioID[16B]
+            fields[1] = data[20:52]     # MD5[32B]
 
         # Parsing LOGO
         elif command == 'LOGO':
-            fields[0] = data[4:20] # SessionID[16B]
+            fields[0] = data[4:20]      # SessionID[16B]
 
         # Parsing ALOG
         elif command == 'ALGO':
-            fields[0] = data[4:7] # Num Delete[3B]
+            fields[0] = data[4:7]       # Num Delete[3B]
 
         # Parsing QUER
         elif command == 'QUER':
-            fields[0] = data[4:20]    # PKTID[16B]
-            fields[1] = data[20:75]   # IPP2P[55B]
-            fields[2] = data[75:80]   # PP2P[5B]
-            fields[3] = data[80:82]   # TTL[2B]
-            fields[4] = data[82:102]  # Ricerca[20B]
+            fields[0] = data[4:20]      # PKTID[16B]
+            fields[1] = data[20:75]     # IPP2P[55B]
+            fields[2] = data[75:80]     # PP2P[5B]
+            fields[3] = data[80:82]     # TTL[2B]
+            fields[4] = data[82:102]    # Ricerca[20B]
 
         # Parsing AQUE
         elif command == 'AQUE':
-            fields[0] = data[4:20]    # PKTID[16B]
-            fields[1] = data[20:75]   # IPP2P[55B]
-            fields[2] = data[75:80]   # PP2P[5B]
-            fields[3] = data[80:112]   # MD5[32B]
-            fields[4] = data[112:212]  # FileName[100B]
+            fields[0] = data[4:20]      # PKTID[16B]
+            fields[1] = data[20:75]     # IPP2P[55B]
+            fields[2] = data[75:80]     # PP2P[5B]
+            fields[3] = data[80:112]    # MD5[32B]
+            fields[4] = data[112:212]   # FileName[100B]
+
+        elif command == 'FIND':
+            fields[0] = data[4:20]      # SessioID[16B]
+            fields[1] = data[-20:]      # Ricerca[20B]
+
+        elif command == 'AFIN':
+            fields[0] = data[4:7]       # Num idm5[3B]
 
         # Parsing RETR
         elif command == 'RETR':

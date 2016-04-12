@@ -18,7 +18,7 @@ Server_Peer(ipv4, ipv6)
 
 #faccio scegliere all'utente se e supernodo o meno
 sel=input("Sei supernodo [s/n] ? ")
-while not(sel=='s' or  sel=='n'):
+while sel not in ['s', 'n']:
     sel=input("Sei supernodo [s/n] ? ")
 
 if sel=='s':
@@ -58,9 +58,9 @@ if sel=='s':
 
             # Visualizzo la lista dei file
             if len(lst) > 0:
-                print("Scelta SessionID        MD5                                        Nome")
+                print("SessionID        MD5                                        Nome")
                 for i in range(0,len(lst)):
-                    print(str(i) + "   " + lst[i][0] + " " + lst[i][2]+" "+lst[i][1])
+                    print(lst[i][0] + " " + lst[i][2]+" "+lst[i][1])
 
             else:
                 print("Non ci sono file nel database")
@@ -144,6 +144,8 @@ else:
                 msg='ADFF'+Utility.sessionId+md5+name
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 t.start()
+            else:
+                print("Effettuare Login")
         # Rimozione di un file
         elif sel=='3':
             #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
@@ -175,9 +177,73 @@ else:
                 msg='DEFF'+Utility.sessionId+md5+name
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 t.start()
+            else:
+                print("Effettuare Login")
         elif sel=='4':
-            True
-            # TODO ricerca di un file al supernodo
+            if Utility.sessionId != '':
+                sel = input("Inserisci stringa da ricercare ")
+                while len(sel) > 20:
+                    sel = input("Stringa Troppo Lunga,reinserisci ")
+                search = sel.ljust(20, ' ')
+                msg = "FIND" + Utility.sessionId + search
+                Utility.listFindFile = []
+                numFindFile = 0
+                lista = Utility.database.listSuperNode()
+                if len(lista) > 0:
+                    t1 = SenderAll(msg, lista)
+                    t1.run()
+
+                #SLEEP PER ATTENDERE I RISULTATI
+                time.sleep(6)
+
+                # Visualizzo le possibili scelte
+                if len(Utility.listFindFile) == 0:
+                    print("Nessun risultato")
+                else:
+                    print("Scelta MD5                       Nome")
+                    for i in range(0, len(Utility.listFindFile)):
+                        print(str(i+1) + " " + Utility.listFindFile[i][0] + " " + Utility.listFindFile[i][1])
+
+                    # Chiedo quale file scaricare
+                    sel = -1
+                    while sel not in range(0, len(Utility.listFindFile) + 1):
+                        sel = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla) "))
+
+                    # Ora devo visualizzare da chi scaricare il file (ricordando che quanti peer ha ogni md5 è nella listFindFile)
+                    if sel > 0:
+                        md5file = Utility.listFindFile[sel - 1][0]
+                        filename = str(Utility.listFindFile[sel - 1][1]).strip()
+                        end = sel - 1
+                        begin = 0
+                        if end != 0:
+                            for i in range(0, end):
+                                begin += Utility.listFindFile[i][2]
+
+                        # Ora begin contiene l'indice di ListFindPeer in cui si trovano i peer che hanno quel md5 selezionato
+                        print("Scelta IP                                            Porta")
+                        for i in range(0, Utility.listFindFile[end][2]):
+                            print(str(i + 1) + " " + Utility.listFindPeer[begin + i][0] + " " + Utility.listFindPeer[begin + i][1])
+
+                        # Chiedo quale file scaricare
+                        sel = -1
+                        while sel not in range(0, len(Utility.listFindFile) + 1):
+                            sel = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla) "))
+                        
+                        # Se la selezione è maggiore di 0 e quindi voglio scaricare
+                        if sel > 0:
+                            index = begin + sel - 1
+                            ipp2p = Utility.listFindPeer[index][0]
+                            pp2p = Utility.listFindPeer[index][1]
+
+                            try:
+                                t1 = Downloader(ipp2p, pp2p, md5file, filename)
+                                t1.run()
+                            except Exception as e:
+                                print(e)
+
+            else:
+                print("Effettuare Login")
+
         elif sel=='5':
             #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
             if Utility.sessionId!='':
@@ -185,6 +251,8 @@ else:
                 msg='LOGO'+Utility.sessionId
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 t.start()
+            else:
+                print("Effettuare Login")
 
         elif sel=='6':
             # Ottengo la lista dei file dal database
@@ -192,9 +260,9 @@ else:
 
             # Visualizzo la lista dei file
             if len(lst) > 0:
-                print("Scelta MD5                                        Nome")
+                print("MD5                                        Nome")
                 for i in range(0,len(lst)):
-                    print(str(i) + "   " + lst[i][0] + " " + lst[i][1])
+                    print(lst[i][0] + " " + lst[i][1])
             else:
                 print("Non ci sono file nel database")
 

@@ -39,7 +39,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 chuncklen = 512
                 peer_md5 = fields[0]
                 # TODO cambiato questo metodo perche il database e cambiato
-                obj = Utility.database.findFile(Utility.sessionId,peer_md5)
+                obj = Utility.database.findFile(Utility.sessionId,peer_md5,1)
 
                 if len(obj) > 0:
                     # svuota il buffer
@@ -77,13 +77,160 @@ class ReceiveHandler(asyncore.dispatcher):
                     f.close()
                     self.shutdown()
 
-            elif command == "QUER":
-                # TODO implementare metodo QUER
-                True
+            elif command == "FIND":
+                pktID = Utility.generateId(16)
+                #Ricavo i campi dal messaggio
+                sessionID = fields[0]
+                search = fields[1]
 
+                '''# Salvo pkID, IP e Porta del peer che ha inviato FIND
+                lst = Utility.database.findPeer(sessionID,None,None,2)
+                Utility.listPeer.append([pkID, lst[0][0], lst[0][1]])'''
+
+                # Preparo il messaggio da inviare ai peer
+                ip = Utility.MY_IPV4 + '|' + Utility.MY_IPV6
+                port = '{:0>5}'.format(Utility.PORT)
+                ttl = '{:0>2}'.format(5)
+                msg = "QUER" + pktID + ip + port + ttl + search
+                Utility.database.addPkt(pktID)
+
+                # Invio la query a tutti i supernodi conosciuti
+                lista = Utility.database.listSuperNode()
+                if len(lista) > 0:
+                    t1 = SenderAll(msg, lista)
+                    t1.run()
+
+                # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
+                time.sleep(4)
+
+                # Estraggo i risultati da Utility.listResultFile eliminandoli
+                result = [row for row in Utility.listResultFile if pktID in row]
+                Utility.listResultFile = [row for row in Utility.listResultFile if pktID not in row]
+
+                ''' Il formato delle righe di result è quello delle AQUE senza il "AQUE" quindi:
+
+                Result[i][0] = PKTID
+                Result[i][1] = IP
+                Result[i][2] = PORT
+                Result[i][3] = MD5
+                Result[i][4] = FILENAME
+
+                Uso questo commento per non sbagliare i campi successivamente e per debug
+                MD5 list è pensata per avere in ogni riga MD5 NAME NPEER
+                '''
+
+                # Preparo le strutture dati per gestire l'invio dei risultati
+                md5List = []
+                peerList = []
+                numMd5 = 0
+                numPeer = 0
+
+                # Suddivido i risultati per md5 diversi
+                for i in range(0,len(result)):
+                    # Controllo se l'md5 effettivamente è diverso
+                    if result[i][3] not in md5List:
+                        md5List.append([result[i][3], result[i][4], 0]) # MD5 NAME e NPEER
+                        peerList.append(result[i][1], result[i][2])     # IP e PORT
+                        numPeer = 1
+
+                        # Controllo nel resto dei risultati se è presente lo stesso MD5
+                        for j in range(i+1, len(result)):
+                            if md5List[numMd5][0] == result[j][3]:
+                                peerList.append(result[j][1], result[j][2])
+                                numPeer += 1
+                        md5List[numMd5][2] = numPeer
+                        numMd5 += 1
+
+                # Compongo il messaggio di ritorno stile upload
+                mess = ("AFIN" + '{:0>3}'.format(len(md5List))).encode()
+                self.write(mess)
+
+                # Ora scorro entrambe le strutture compilate in precedenza così compilo il messaggio di risposta
+                j = 0
+                for i in range(0,len(md5List)):
+                    # Preparo per l'invio MD5 NAME NumPeer
+                    self.write((md5List[i][0] + md5List[i][1] + md5List[i][2]).encode())
+                    logging.debug('messaggio nel buffer pronto')
+
+                    # Ora devo inserire nel messaggio tutti i peer che hanno il file
+                    for k in range (0, md5List[i][2]):
+                        self.write(peerList[j][0] + peerList[j][1])
+                        j += 1
+
+                self.shutdown()
+
+            elif command == "AFIN":
+                numMd5 = fields[0]
+
+                # Leggo MD5 NAME NUM PEER dal socket
+                for i in range(0, numMd5):
+                    tmp = self.recv(119)  # leggo la lunghezza del chunk
+                    while len(tmp) < 119:
+                        tmp += self.recv(119 - len(tmp))
+                        if len(tmp) == 0:
+                            raise Exception("Socket close")
+
+                    # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
+                    if not tmp[-3:].decode(errors='ignore').isnumeric():
+                        raise Exception("Packet loss")
+
+                    # Salvo ciè che è stato ricavato in ListFindFile
+                    Utility.listFindFile.append([tmp[:16].decode(), tmp[16:-3].decode(), int(tmp[-3:].decode())])
+
+                    # Ottengo la lista dei peer che hanno lo stesso md5
+                    numPeer = Utility.listFindFile[Utility.numFindFile][2]
+                    for j in range(0, numPeer):
+
+                        # Leggo i dati di ogni peer dal socket
+                        buffer = self.recv(60)  # Leggo il contenuto del chunk
+                        while len(buffer) < 60:
+                            tmp = self.recv(60 - len(buffer))
+                            buffer += tmp
+                            if len(tmp) == 0:
+                                raise Exception("Socket close")
+
+                        # Salvo ciò che è stato ricavato in Peer List
+                        Utility.listFindPeer.append([tmp[:55].decode(), int(tmp[-5:].decode())])
+
+            elif command == "QUER":
+                msgRet = 'AQUE'
+                # Prendo i campi del messaggio ricevuto
+                pkID = fields[0]
+                ipDest = fields[1]
+                portDest = fields[2]
+                ttl = fields[3]
+                name = fields[4]
+
+                # Controllo se il packetId è già presente se è presente non rispondo alla richiesta
+                # E non la rispedisco
+                if not Utility.database.checkPkt(pkID):
+                    Utility.database.addPkt(pkID)
+                    # Esegue la risposta ad una query
+                    msgRet = msgRet + pkID
+                    ip = Utility.MY_IPV4 + '|' + Utility.MY_IPV6
+                    port = '{:0>5}'.format(Utility.PORT)
+                    msgRet = msgRet + ip + port
+                    lst = Utility.database.findMd5(name.strip(' '))
+                    for i in range(0, len(lst)):
+                        name = Utility.database.findFile(None,lst[i][0],2)
+                        r = msgRet
+                        r = r + lst[i][0] + str(name[0][0]).ljust(100, ' ')
+                        t1 = Sender(r, ipDest, portDest)
+                        t1.run()
+
+                    # controllo se devo divulgare la query
+                    if int(ttl) >= 1:
+                        ttl = '{:0>2}'.format(int(ttl) - 1)
+                        msg = "QUER" + pkID + ipDest + portDest + ttl + name
+                        lista = Utility.database.listSuperNode()
+                        if len(lista) > 0:
+                            t2 = SenderAll(msg, lista)
+                            t2.run()
+
+            # Salvo il risultato in una lista di risultati
             elif command=="AQUE":
-                # TODO implementare metodo ricezione AQUE
-                True
+                if Utility.database.checkPkt(fields[0]):
+                    Utility.listResultFile.append(fields)
 
             #Procedura LOGI
             elif command=='LOGI':

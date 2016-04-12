@@ -111,14 +111,14 @@ while True:
                 print(str(i+1)+"    "+lst[i])
 
             i = -1
-            while i not in range(0, len(lst)):
+            while i not in range(0, len(lst)+1):
                 i = int(input("Inserisci il numero del file da aggiungere "))
 
             fileScelto=i-1
 
             #genero md5
             md5=Utility.generateMd5(Utility.PATHDIR+lst[fileScelto])
-            name=sel.ljust(100,' ')
+            name=lst[fileScelto].ljust(100,' ')
             #Aggiungo il file al mio database
             Utility.database.addFile(Utility.sessionId,name,md5)
             #Controllo se devo inviare il messaggio di aggiunta al mio supernodo, se sono peer
@@ -148,8 +148,9 @@ while True:
                 while i not in range(0, len(lst)):
                     i = int(input("Scegli il file da cancellare "))
 
+                fileScelto=i-1
                 # Elimino il file
-                Utility.database.removeFile(Utility.sessionId,lst[i][0])
+                Utility.database.removeFile(Utility.sessionId,lst[fileScelto][0])
                 print("Operazione completata")
             else:
                 print("Non ci sono file nel database")

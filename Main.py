@@ -41,7 +41,7 @@ if sel=='s':
             Utility.listFindSNode = []
 
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
-            listaP=Utility.database.listPeer()
+            listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
                 tP = SenderAll(msg, listaP)
                 tP.run()
@@ -83,6 +83,7 @@ else:
         print(" ")
         sel=input("Inserisci il numero del comando da eseguire ")
         if sel=='1':
+            # TODO se sei gia connesso eseguire la procedura di LOGO prima del nuovo LOGI
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -93,7 +94,7 @@ else:
             Utility.listFindSNode = []
 
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
-            listaP=Utility.database.listPeer()
+            listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
                 tP = SenderAll(msg, listaP)
                 tP.run()
@@ -132,6 +133,7 @@ else:
 
         #Aggiunta di un file
         elif sel=='2':
+            # TODO modificare aggiunta con menu con elenco file
             #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
             if Utility.sessionId!='':
                 sel=input('Inserici nome file da aggiungere ')
@@ -148,6 +150,7 @@ else:
                 print("Effettuare Login")
         # Rimozione di un file
         elif sel=='3':
+            # TODO far partire da 1 la ricerca e usare lo 0 per uscire dalla rimozione
             #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
             if Utility.sessionId!='':
                 # Ottengo la lista dei file dal database
@@ -180,6 +183,7 @@ else:
             else:
                 print("Effettuare Login")
         elif sel=='4':
+            # TODO se il tuo e presente non devi comparire nella lista dei risultati
             if Utility.sessionId != '':
                 sel = input("Inserisci stringa da ricercare ")
                 while len(sel) > 20:
@@ -256,7 +260,7 @@ else:
 
         elif sel=='6':
             # Ottengo la lista dei file dal database
-            lst = Utility.database.listFileForSessionId()
+            lst = Utility.database.listFileForSessionId(Utility.sessionId)
 
             # Visualizzo la lista dei file
             if len(lst) > 0:

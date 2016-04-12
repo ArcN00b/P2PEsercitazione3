@@ -7,13 +7,13 @@ import threading
 
 class Utility:
 
-    MY_IPV4="127.000.000.1"
-    MY_IPV6="0000:0000:0000:0000:0000:0000:0000:0001"
+    MY_IPV4="172.030.007.001"
+    MY_IPV6="fc00:0000:0000:0000:0000:0000:0007:0001"
 
     #MY_IPV4="127.000.000.001"
     #MY_IPV6="0000:0000:0000:0000:0000:0000:0000:0001"
 
-    PORT=3000
+    PORT=80
     PATHDIR='/home/flavio/Scrivania/File/'
 
     listFindPeer = []
@@ -26,6 +26,8 @@ class Utility:
     portSuperNodo='' # Indica la porta del SuperNodo a cui il Peer e' collegato
     sessionId='' # Indica il sessionId del Peer
     database = ManageDB.ManageDB()
+
+    database.addSuperNode("172.030.007.002|fc00:0000:0000:0000:0000:0000:0007:0002","00080")
 
     # Metodo che genera un numero random nel range [1024, 65535]
     @staticmethod

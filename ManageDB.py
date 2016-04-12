@@ -34,7 +34,7 @@ class ManageDB:
             c.execute("CREATE TABLE PACKETS (ID TEXT NOT NULL, DATE INTEGER NOT NULL)")
 
             # Imposto il tempo di cancellazione dei packets
-            self.deleteTime = 20
+            self.deleteTime = 60
 
             conn.commit()
 
@@ -141,15 +141,19 @@ class ManageDB:
                 return count
 
     # Metodo che ritorna la lista dei peer
-    def listPeer(self):
+    def listPeer(self,flag):
         count=None
         try:
             # Connessione
             conn=sqlite3.connect("data.db")
             c=conn.cursor()
 
-            c.execute("SELECT * FROM PEERS")
-            count=c.fetchall()
+            if flag==1:
+                c.execute("SELECT * FROM PEERS")
+                count=c.fetchall()
+            elif flag==2:
+                c.execute("SELECT IP,PORT FROM PEERS")
+                count=c.fetchall()
 
             conn.commit()
 
@@ -467,7 +471,7 @@ class ManageDB:
 # PEERS:        SESSIONID   IP      PORT
 # FILES:        SESSIONID   NAME    MD5
 # PACKETS:      ID      DATE
-
+'''
 manager = ManageDB()
 
 print("Aggiungo Peer")
@@ -540,4 +544,5 @@ all_rows = manager.listFile()
 for row in all_rows:
     print('{0} {1} {2}'.format(row[0],row[1],row[2]))
 print("")
+'''
 

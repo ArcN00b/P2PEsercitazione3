@@ -28,6 +28,7 @@ class ReceiveHandler(asyncore.dispatcher):
 
         data = self.recv(2048)
         logging.debug(data)
+        print(data)
 
         if len(data) > 0:
             # converto i comandi
@@ -78,6 +79,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     self.shutdown()
 
             elif command == "FIND":
+                # TODO compilare manualmente listresultfile invece di inviare la query a se stesso
                 pktID = Utility.generateId(16)
                 #Ricavo i campi dal messaggio
                 sessionID = fields[0]
@@ -96,6 +98,7 @@ class ReceiveHandler(asyncore.dispatcher):
 
                 # Invio la query a tutti i supernodi conosciuti
                 lista = Utility.database.listSuperNode()
+                lista.append([Utility.MY_IPV4+'|'+Utility.MY_IPV6,Utility.PORT])
                 if len(lista) > 0:
                     t1 = SenderAll(msg, lista)
                     t1.run()
@@ -293,6 +296,7 @@ class ReceiveHandler(asyncore.dispatcher):
 
             # Procedura LOGO
             elif command=='LOGO':
+                # TODO rimuovere il peer dalla tabella
                 # solo il supernodo deve elaborare una richiesta logo
                 if Utility.superNodo:
                     ssID=fields[0]
@@ -335,7 +339,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
-                        listaP=Utility.database.listPeer()
+                        listaP=Utility.database.listPeer(2)
                         if len(listaP)>0:
                             tP = SenderAll(msg,listaP)
                             tP.run()
@@ -357,8 +361,7 @@ class ReceiveHandler(asyncore.dispatcher):
                             findPeer=True
 
                     if Utility.database.checkPkt(pkID)==True and findPeer:
-                        global numFindSNode
-                        numFindSNode+=1
+                        Utility.numFindSNode+=1
                         Utility.listFindSNode.append(fields)
                         print(str(Utility.numFindSNode) + " " + ip + " " + port)
 

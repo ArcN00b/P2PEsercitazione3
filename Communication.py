@@ -44,7 +44,7 @@ class Sender:
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
             sock.connect((a, int(self.port)))
-            print('inviato a ' + a + ' : ' + self.messaggio)
+            print('inviato a ' + a+':'+str(self.port) + ' : ' + self.messaggio)
             sock.sendall(self.messaggio.encode())
             sock.close()
         except Exception as e:

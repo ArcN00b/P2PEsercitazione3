@@ -20,7 +20,7 @@ class SenderAll:
             porta = self.listaNear[i][1]
 
             s = Sender(messaggio, ip, porta)
-            s.start()
+            s.run()
 
 class Sender:
     # Costruttore che inizializza gli attributi del Worker
@@ -43,11 +43,11 @@ class Sender:
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
             sock.connect((a, int(self.port)))
-            print('inviato a ' + a+':'+str(self.port) + ' : ' + self.messaggio)
+            print('inviato a ' + a +':'+str(self.port) + ' : ' + self.messaggio)
             sock.sendall(self.messaggio.encode())
             sock.close()
         except Exception as e:
-            print("Errore Peer down " + self.ip + " " + self.port)
+            print("Errore Peer down " + self.ip + " " + str(self.port))
 
 class SenderAndWait:
     # Costruttore che inizializza gli attributi del Worker
@@ -71,10 +71,10 @@ class SenderAndWait:
                 self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
             self.sock.connect((a, int(self.port)))
-            print('inviato a ' + a+':'+str(self.port) + ' : ' + self.messaggio)
+            print('inviato a ' + a +':'+str(self.port) + ' : ' + self.messaggio)
             self.sock.sendall(self.messaggio.encode())
         except Exception as e:
-            print("Errore Peer down " + self.ip + " " + self.port)
+            print("Errore Peer down " + self.ip + " " + str(self.port))
 
     def getSocket(self):
         return self.sock

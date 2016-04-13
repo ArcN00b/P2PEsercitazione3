@@ -150,22 +150,21 @@ class ReceiveHandler(asyncore.dispatcher):
                         numMd5 += 1
 
                 # Compongo il messaggio di ritorno stile upload
-                mess = ("AFIN" + '{:0>3}'.format(len(md5List))).encode()
-                self.write(mess)
+                peer = Utility.database.findPeer(sessionID,None,None,2)
+                t1 = SenderAFIN("AFIN" + '{:0>3}'.format(len(md5List)), peer[0][0], peer[0][1])
 
                 # Ora scorro entrambe le strutture compilate in precedenza così compilo il messaggio di risposta
                 j = 0
                 for i in range(0,len(md5List)):
                     # Preparo per l'invio MD5 NAME NumPeer
-                    self.write((md5List[i][0] + md5List[i][1] + str(md5List[i][2]).zfill(3)).encode())
-                    logging.debug('messaggio nel buffer pronto')
+                    t1.send(md5List[i][0] + md5List[i][1] + str(md5List[i][2]).zfill(3))
 
                     # Ora devo inserire nel messaggio tutti i peer che hanno il file
                     for k in range(0, md5List[i][2]):
-                        self.write((peerList[j][0] + peerList[j][1]).encode())
+                        t1.send(peerList[j][0] + peerList[j][1])
                         j += 1
 
-                self.shutdown()
+                t1.close()
 
             elif command == "AFIN":
                 numMd5 = int(fields[0])

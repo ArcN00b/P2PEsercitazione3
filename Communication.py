@@ -50,6 +50,42 @@ class Sender:
         except Exception as e:
             print("Errore Peer down " + self.ip + " " + self.port)
 
+class SenderAFIN:
+
+    # Costruttore che inizializza gli attributi del Worker
+    def __init__(self, messaggio, ip, port):
+        # definizione thread del client
+        self.messaggio = messaggio
+        self.ip = ip
+        self.port = port
+        try:
+            r = 0  # random.randrange(0, 100)
+            ipv4, ipv6 = Utility.getIp(self.ip)
+            if r < 50:
+                self.address = ipv4
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            else:
+                self.address = ipv6
+                self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+
+            self.sock.connect((self.address, int(self.port)))
+            print('inviato a ' + self.address + ':' + str(self.port) + ' : ' + self.messaggio)
+            self.sock.sendall(self.messaggio.encode())
+        except Exception as e:
+            print("Errore Peer down " + self.ip + " " + self.port)
+
+    # Funzione che lancia il worker e controlla la chiusura improvvisa
+    def send(self, messaggio):
+        try:
+            print('inviato a ' + self.address +':'+str(self.port) + ' : ' + messaggio)
+            self.sock.sendall(messaggio.encode())
+        except Exception as e:
+            print("Errore Peer down " + self.ip + " " + self.port)
+
+    def close(self):
+        self.sock.shutdown()
+        self.sock.close()
+
 class Downloader(threading.Thread):
     # Costruttore che inizializza gli attributi del Worker
     def __init__(self, ipp2p, pp2p, md5, name):

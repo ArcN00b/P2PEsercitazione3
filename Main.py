@@ -217,7 +217,7 @@ while True:
 
                     # Chiedo quale file scaricare
                     sel = -1
-                    while sel not in range(0, len(Utility.listFindFile) + 1):
+                    while sel not in range(0, Utility.listFindFile[end][2] + 1):
                         sel = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla) "))
 
                     # Se la selezione e maggiore di 0 e quindi voglio scaricare
@@ -226,11 +226,15 @@ while True:
                         ipp2p = Utility.listFindPeer[index][0]
                         pp2p = Utility.listFindPeer[index][1]
 
-                        try:
-                            t1 = Downloader(ipp2p, pp2p, md5file, filename)
-                            t1.run()
-                        except Exception as e:
-                            print(e)
+                        # Se l'ip scelto non è il proprio
+                        if ipp2p != Utility.MY_IPV4 + "|" + Utility.MY_IPV6:
+                            try:
+                                t1 = Downloader(ipp2p, pp2p, md5file, filename)
+                                t1.run()
+                            except Exception as e:
+                                print(e)
+                        else:
+                            print("Non è possibile scaricare da se stessi")
 
         else:
             print("Effettuare Login")

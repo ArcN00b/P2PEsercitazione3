@@ -2,36 +2,22 @@ from Utility import *
 import socket
 
 # questa classe non e' un thread, ma ne genera per inviare i dati
-class SenderAll:
-    # Costruttore che inizializza gli attributi del Worker
-    def __init__(self, messaggio, listaNear):
-        # definizione thread del client
-        self.messaggio = messaggio
-        self.listaNear = listaNear
+class Communication:
 
-    # Funzione che lancia il worker e controlla la chiusura improvvisa
-    def run(self):
-        for i in range(0, len(self.listaNear)):
-            messaggio = self.messaggio
-            ip = self.listaNear[i][0]
-            porta = self.listaNear[i][1]
+    @staticmethod
+    def senderAll(messaggio, listaNear):
+        for i in range(0, len(listaNear)):
+            ip = listaNear[i][0]
+            porta = listaNear[i][1]
 
-            s = Sender(messaggio, ip, porta)
-            s.start()
+            Communication.sender(messaggio, ip, porta, 1)
 
-class Sender:
-    # Costruttore che inizializza gli attributi del Worker
-    def __init__(self, messaggio, ip, port):
-        # definizione thread del client
-        self.messaggio = messaggio
-        self.ip = ip
-        self.port = port
-
-    # Funzione che lancia il worker e controlla la chiusura improvvisa
-    def start(self):
+    # Metodo che invia semplicemente il messaggio a ip e porta
+    @staticmethod
+    def sender(messaggio, ip, port, flag):
         try:
             r = 0 #random.randrange(0, 100)
-            ipv4, ipv6 = Utility.getIp(self.ip)
+            ipv4, ipv6 = Utility.getIp(ip)
             if r < 50:
                 a = ipv4
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -39,65 +25,19 @@ class Sender:
                 a = ipv6
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
-            sock.connect((a, int(self.port)))
-            print('inviato a ' + a+':'+str(self.port) + ' : ' + self.messaggio)
-            sock.sendall(self.messaggio.encode())
-            sock.close()
-        except Exception as e:
-            print("Errore Peer down " + self.ip + " " + self.port)
-
-class SenderAFIN:
-
-    # Costruttore che inizializza gli attributi del Worker
-    def __init__(self, messaggio, ip, port):
-        # definizione thread del client
-        self.messaggio = messaggio
-        self.ip = ip
-        self.port = port
-        try:
-            r = 0  # random.randrange(0, 100)
-            ipv4, ipv6 = Utility.getIp(self.ip)
-            if r < 50:
-                self.address = ipv4
-                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((a, int(port)))
+            print('inviato a ' + a+':'+str(port) + ' : ' + messaggio)
+            sock.sendall(messaggio.encode())
+            if flag == 1:
+                sock.close()
             else:
-                self.address = ipv6
-                self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-
-            self.sock.connect((self.address, int(self.port)))
-            print('inviato a ' + self.address + ':' + str(self.port) + ' : ' + self.messaggio)
-            self.sock.sendall(self.messaggio.encode())
+                return sock
         except Exception as e:
-            print("Errore Peer down " + self.ip + " " + self.port)
+            print("Errore Peer down " + ip + " " + port)
 
-    # Funzione che lancia il worker e controlla la chiusura improvvisa
-    def send(self, messaggio):
-        try:
-            print('inviato a ' + self.address +':'+str(self.port) + ' : ' + messaggio)
-            self.sock.sendall(messaggio.encode())
-        except Exception as e:
-            print("Errore Peer down " + self.ip + " " + self.port)
-
-    def close(self):
-        self.sock.shutdown()
-        self.sock.close()
-
-class Downloader(threading.Thread):
     # Costruttore che inizializza gli attributi del Worker
-    def __init__(self, ipp2p, pp2p, md5, name):
-        # definizione thread del client
-        self.ipp2p = ipp2p
-        self.pp2p = pp2p
-        self.md5 = md5
-        self.name = name
-
-    # Funzione che lancia il worker e controlla la chiusura improvvisa
-    def run(self):
-        #try:
-        ipp2p = self.ipp2p
-        pp2p = self.pp2p
-        md5 = self.md5
-        name = self.name
+    @staticmethod
+    def downloader(ipp2p, pp2p, md5, name):
 
         r = 0#random.randrange(0,100)
         ipv4, ipv6 = Utility.getIp(ipp2p)
@@ -153,3 +93,41 @@ class Downloader(threading.Thread):
             print("Download completato")
 
         sock.close()
+
+    @staticmethod
+    def aFinder(sock):
+        # ricevo i primi 10 Byte che sono "ARET" + n_chunk
+        recv_mess = sock.recv(7).decode()
+
+        if recv_mess[:4] == "AFIN":
+            numMd5 = int(recv_mess[4:7])
+
+            # Leggo MD5 NAME NUM PEER dal socket
+            for i in range(0, numMd5):
+                tmp = sock.recv(119)  # leggo la lunghezza del chunk
+                while len(tmp) < 119:
+                    tmp += sock.recv(119 - len(tmp))
+                    if len(tmp) == 0:
+                        raise Exception("Socket close")
+
+                # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
+                if not tmp[-3:].decode(errors='ignore').isnumeric():
+                    raise Exception("Packet loss")
+
+                # Salvo cie che e stato ricavato in ListFindFile
+                Utility.listFindFile.append([tmp[:16].decode(), tmp[16:-3].decode(), int(tmp[-3:].decode())])
+
+                # Ottengo la lista dei peer che hanno lo stesso md5
+                numPeer = Utility.listFindFile[Utility.numFindFile][2]
+                for j in range(0, numPeer):
+
+                    # Leggo i dati di ogni peer dal socket
+                    buffer = sock.recv(60)  # Leggo il contenuto del chunk
+                    while len(buffer) < 60:
+                        tmp = sock.recv(60 - len(buffer))
+                        buffer += tmp
+                        if len(tmp) == 0:
+                            raise Exception("Socket close")
+
+                    # Salvo ciò che e stato ricavato in Peer List
+                    Utility.listFindPeer.append([tmp[:55].decode(), int(tmp[-5:].decode())])

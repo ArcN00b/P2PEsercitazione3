@@ -62,14 +62,12 @@ while True:
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                tP = SenderAll(msg, listaP)
-                tP.run()
+                Communication.senderAll(msg, listaP)
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                tS = SenderAll(msg, listaS)
-                tS.run()
+                Communication.senderAll(msg, listaS)
 
             # Visualizzo le possibili scelte
             #print("Scegli il supernodo a cui vuoi collegarti")
@@ -92,8 +90,7 @@ while True:
                 Utility.portSuperNodo = portDest
 
                 try:
-                    t1 = Sender(msg, ipDest, portDest)
-                    t1.start()
+                    Communication.sender(msg, ipDest, portDest,1)
                 except Exception as e:
                     print(e)
         else:
@@ -125,8 +122,7 @@ while True:
             if not Utility.superNodo:
                 #Creo il messaggio da inviare al supernodo
                 msg='ADFF'+Utility.sessionId+md5+name
-                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.start()
+                Communication.sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo),1)
         else:
             print("Effettuare Login")
 
@@ -151,19 +147,17 @@ while True:
                 fileScelto=i-1
                 # Elimino il file
                 Utility.database.removeFile(Utility.sessionId,lst[fileScelto][0])
-                print("Operazione completata")
-            else:
-                print("Non ci sono file nel database")
-                True
 
             #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
             if not Utility.superNodo:
                 #genero il messaggio da mandare al supernodo con il file eliminato
-                md5=lst[i][0]
-                name=lst[i][1]
+                md5=lst[fileScelto][0]
+                name=lst[fileScelto][1]
                 msg='DEFF'+Utility.sessionId+md5+name
-                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.start()
+                Communication.sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                print("Operazione completata")
+            else:
+                print("Non ci sono file nel database")
         else:
             print("Effettuare Login")
 
@@ -178,13 +172,10 @@ while True:
             msg = "FIND" + Utility.sessionId + search
             Utility.listFindFile = []
             numFindFile = 0
-            lista = Utility.database.listSuperNode()
-            if len(lista) > 0:
-                t1 = SenderAll(msg, lista)
-                t1.run()
+            sock = Communication.sender(msg, Utility.ipSuperNodo, int(Utility.portSuperNodo),2)
 
-            #SLEEP PER ATTENDERE I RISULTATI
-            time.sleep(4)
+            # Aspetto la risposta della FIND
+            Communication.aFinder(sock)
 
             # Visualizzo le possibili scelte
             if len(Utility.listFindFile) != 0:
@@ -228,8 +219,7 @@ while True:
                         # Se l'ip scelto non è il proprio
                         if ipp2p != Utility.MY_IPV4 + "|" + Utility.MY_IPV6:
                             try:
-                                t1 = Downloader(ipp2p, pp2p, md5file, filename)
-                                t1.run()
+                                Communication.downloader(ipp2p, pp2p, md5file, filename)
                             except Exception as e:
                                 print(e)
                         else:
@@ -245,8 +235,8 @@ while True:
             if not Utility.superNodo:
                 # genero e invio il messaggio di logout al supernodo
                 msg='LOGO'+Utility.sessionId
-                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.start()
+                Communication.sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo),1)
+                Utility.sessionId = ''
             else:
                 print("Sei un supernodo")
         else:
@@ -293,14 +283,12 @@ while True:
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                tP = SenderAll(msg, listaP)
-                tP.run()
+                Communication.senderAll(msg, listaP)
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                tS = SenderAll(msg, listaS)
-                tS.run()
+                Communication.senderAll(msg, listaS)
 
     #Visualizza Peer
     elif sel=='9':

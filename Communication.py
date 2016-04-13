@@ -1,9 +1,5 @@
-from builtins import print
-
 from Utility import *
-import threading
 import socket
-import logging
 
 # questa classe non e' un thread, ma ne genera per inviare i dati
 class SenderAll:
@@ -90,7 +86,6 @@ class Downloader(threading.Thread):
     # Costruttore che inizializza gli attributi del Worker
     def __init__(self, ipp2p, pp2p, md5, name):
         # definizione thread del client
-        threading.Thread.__init__(self)
         self.ipp2p = ipp2p
         self.pp2p = pp2p
         self.md5 = md5

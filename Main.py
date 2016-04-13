@@ -12,10 +12,6 @@ from Server import *
 from Utility import *
 import os
 
-
-ipv4, ipv6 = Utility.getIp(Utility.MY_IPV4 +"|" + Utility.MY_IPV6)
-Server_Peer(ipv4, ipv6)
-
 #faccio scegliere all'utente se e supernodo o meno
 sel=input("Sei supernodo [s/n] ? ")
 while sel not in ['s', 'n']:
@@ -30,6 +26,9 @@ if sel=='s':
 else:
     Utility.superNodo=False
     Utility.PORT=3000
+
+ipv4, ipv6 = Utility.getIp(Utility.MY_IPV4 + "|" + Utility.MY_IPV6)
+Server_Peer(ipv4, ipv6)
 
 #MENU
 while True:

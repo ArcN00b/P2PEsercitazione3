@@ -105,10 +105,11 @@ class ReceiveHandler(asyncore.dispatcher):
                 # Invio la query a tutti i supernodi conosciuti
                 lista = Utility.database.listSuperNode()
                 if len(lista) > 0:
-                    Communication.senderAll(msg, lista)
+                    ts = SenderAll(msg, lista)
+                    ts.run()
 
                 # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
-                time.sleep(4)
+                time.sleep(1)
 
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
                 result = [row for row in Utility.listResultFile if pktID in row]
@@ -148,8 +149,11 @@ class ReceiveHandler(asyncore.dispatcher):
                         md5List[numMd5][2] = numPeer
                         numMd5 += 1
 
-                mess = ("AFIN" + '{:0>3}'.format(len(md5List))).encode()
+                # svuota il buffer
+                self.out_buffer = []
+                mess = ("AFIN" + str(len(md5List)).zfill(3)).encode()
                 self.write(mess)
+                logging.debug('messaggio nel buffer pronto')
 
                 # Ora scorro entrambe le strutture compilate in precedenza così compilo il messaggio di risposta
                 j = 0
@@ -157,11 +161,14 @@ class ReceiveHandler(asyncore.dispatcher):
                     # Preparo per l'invio MD5 NAME NumPeer
                     mess = (md5List[i][0] + md5List[i][1] + str(md5List[i][2]).zfill(3)).encode()
                     self.write(mess)
+                    logging.debug('messaggio nel buffer pronto')
 
                     # Ora devo inserire nel messaggio tutti i peer che hanno il file
                     for k in range(0, md5List[i][2]):
-                        mess = (peerList[j][0] + peerList[j][1]).encode()
+                        mess = (peerList[j+k][0] + peerList[j+k][1]).encode()
                         self.write(mess)
+                        logging.debug('messaggio nel buffer pronto')
+                    j+=md5List[i][2]
 
                 self.shutdown()
 
@@ -189,7 +196,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         name = Utility.database.findFile(None,None,lst[i][0],2)
                         r = msgRet
                         r = r + lst[i][0] + str(name[0][0]).ljust(100, ' ')
-                        Communication.sender(r, ipDest, portDest, 1)
+                        ts = Sender(r, ipDest, portDest)
+                        ts.run()
 
                     # controllo se devo divulgare la query
                     if int(ttl) >= 1:
@@ -197,7 +205,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         msg = "QUER" + pkID + ipDest + portDest + ttl + name
                         lista = Utility.database.listSuperNode()
                         if len(lista) > 0:
-                            Communication.senderAll(msg, lista)
+                            ts = SenderAll(msg, lista)
+                            ts.run()
 
             # Salvo il risultato in una lista di risultati
             elif command=="AQUE":
@@ -222,7 +231,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         ssID='0'*16
 
                     msgRet='ALGI'+ssID
-                    Communication.sender(msgRet,ip,port, 1)
+                    ts = Sender(msgRet,ip,port)
+                    ts.run()
 
             # Procedura ALGI
             elif command=='ALGI':
@@ -279,7 +289,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         Utility.database.removePeer(ssID)
                         #Comunico al peer il messaggio di ritorno
                         msgRet='ALGO'+'{:0>3}'.format(canc)
-                        Communication.sender(msgRet,ip,port, 1)
+                        ts = Sender(msgRet,ip,port)
+                        ts.run()
 
             # Procedura ALGO
             elif command=='ALGO':
@@ -302,7 +313,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         ip=Utility.MY_IPV4+"|"+Utility.MY_IPV6
                         port='{:0>5}'.format(Utility.PORT)
                         msgRet="ASUP"+pkID+ip+port
-                        Communication.sender(msgRet,fields[1],fields[2], 1)
+                        ts = Sender(msgRet,fields[1],fields[2])
+                        ts.run()
                     # Decremento il ttl e controllo se devo inviare
                     ttl = int(fields[3])-1
                     if ttl > 0:
@@ -310,10 +322,12 @@ class ReceiveHandler(asyncore.dispatcher):
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
                         listaP=Utility.database.listPeer(2)
                         if len(listaP)>0:
-                            Communication.senderAll(msg,listaP)
+                            ts = SenderAll(msg,listaP)
+                            ts.run()
                         listaS=Utility.database.listSuperNode()
                         if len(listaS)>0:
-                            Communication.senderAll(msg,listaS)
+                            ts = SenderAll(msg,listaS)
+                            ts.run()
 
             elif command=="ASUP":
                 pkID=fields[0]

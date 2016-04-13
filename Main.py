@@ -62,12 +62,14 @@ while True:
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                Communication.senderAll(msg, listaP)
+                ts = SenderAll(msg, listaP)
+                ts.run()
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                Communication.senderAll(msg, listaS)
+                ts = SenderAll(msg, listaS)
+                ts.run()
 
             # Visualizzo le possibili scelte
             #print("Scegli il supernodo a cui vuoi collegarti")
@@ -90,7 +92,8 @@ while True:
                 Utility.portSuperNodo = portDest
 
                 try:
-                    Communication.sender(msg, ipDest, portDest,1)
+                    ts = Sender(msg, ipDest, portDest)
+                    ts.run()
                 except Exception as e:
                     print(e)
         else:
@@ -122,7 +125,8 @@ while True:
             if not Utility.superNodo:
                 #Creo il messaggio da inviare al supernodo
                 msg='ADFF'+Utility.sessionId+md5+name
-                Communication.sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo),1)
+                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts.run()
         else:
             print("Effettuare Login")
 
@@ -154,7 +158,8 @@ while True:
                 md5=lst[fileScelto][0]
                 name=lst[fileScelto][1]
                 msg='DEFF'+Utility.sessionId+md5+name
-                Communication.sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts.run()
                 print("Operazione completata")
             else:
                 print("Non ci sono file nel database")
@@ -172,10 +177,13 @@ while True:
             msg = "FIND" + Utility.sessionId + search
             Utility.listFindFile = []
             numFindFile = 0
-            sock = Communication.sender(msg, Utility.ipSuperNodo, int(Utility.portSuperNodo),2)
+            ts = SenderAndWait(msg, Utility.ipSuperNodo, int(Utility.portSuperNodo))
+            ts.run()
+            sock = ts.getSocket()
 
             # Aspetto la risposta della FIND
-            Communication.aFinder(sock)
+            tf = AFinder(sock)
+            tf.run()
 
             # Visualizzo le possibili scelte
             if len(Utility.listFindFile) != 0:
@@ -219,7 +227,8 @@ while True:
                         # Se l'ip scelto non è il proprio
                         if ipp2p != Utility.MY_IPV4 + "|" + Utility.MY_IPV6:
                             try:
-                                Communication.downloader(ipp2p, pp2p, md5file, filename)
+                                td = Downloader(ipp2p, pp2p, md5file, filename)
+                                td.run()
                             except Exception as e:
                                 print(e)
                         else:
@@ -235,7 +244,8 @@ while True:
             if not Utility.superNodo:
                 # genero e invio il messaggio di logout al supernodo
                 msg='LOGO'+Utility.sessionId
-                Communication.sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo),1)
+                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts.run()
                 Utility.sessionId = ''
             else:
                 print("Sei un supernodo")
@@ -283,12 +293,14 @@ while True:
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                Communication.senderAll(msg, listaP)
+                ts = SenderAll(msg, listaP)
+                ts.run()
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                Communication.senderAll(msg, listaS)
+                ts = SenderAll(msg, listaS)
+                ts.run()
 
     #Visualizza Peer
     elif sel=='9':

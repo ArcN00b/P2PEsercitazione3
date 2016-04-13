@@ -50,7 +50,7 @@ while True:
     if sel=='1':
         if not Utility.superNodo:
             # TODO se sei gia connesso eseguire la procedura di LOGO prima del nuovo LOGI
-            # TODO aggiornare supernodi nel database se sono peer
+
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -72,9 +72,7 @@ while True:
                 tS = SenderAll(msg, listaS)
                 tS.run()
 
-            # Visualizzo le possibili scelte
-            #print("Scegli il supernodo a cui vuoi collegarti")
-
+            # Scelgo il supernodo a cui voglio collegarmi
             i = -1
             while i not in range(0, Utility.numFindSNode +1):
                 i = int(input("Scegli il supernodo a cui vuoi collegarti\n"))
@@ -85,6 +83,23 @@ while True:
                 print ("Nessun supernodo trovato")
 
             elif i > 0:
+                # Effettuo la LOGO dal precedente supernodo
+                if Utility.sessionId!='':
+
+                    #Resetto le variabili globali anche se effettivamente non ricevo una ALGO di risposta
+                    Utility.sessionId=''
+                    Utility.ipSuperNodo=''
+                    Utility.portSuperNodo=''
+
+                    # Invio la LOGO al supernodo a cui sono collegato
+                    msg='LOGO'+Utility.sessionId
+                    try:
+                        tL=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                        tL.start()
+                    except Exception as e:
+                        print(e)
+
+                # Supernodo scelto, effettuo la LOGI
                 i = i - 1;
                 ipDest = Utility.listFindSNode[i][1]
                 portDest = Utility.listFindSNode[i][2]
@@ -98,7 +113,7 @@ while True:
                 except Exception as e:
                     print(e)
         else:
-            print("Sei un supernodo")
+            print("Errore: sei un supernodo, non puoi collegarti ad altri supernodi")
 
     #Aggiunta di un file
     elif sel=='2':
@@ -240,6 +255,11 @@ while True:
         #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
         if Utility.sessionId!='':
             if not Utility.superNodo:
+                #Resetto le variabili globali anche se effettivamente non ricevo una ALGO di risposta
+                Utility.sessionId=''
+                Utility.ipSuperNodo=''
+                Utility.portSuperNodo=''
+
                 # genero e invio il messaggio di logout al supernodo
                 msg='LOGO'+Utility.sessionId
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
@@ -283,11 +303,11 @@ while True:
             port='{:0>5}'.format(Utility.PORT)
             ttl='{:0>2}'.format(4)
             msg="SUPE"+pktID+ip+port+ttl
-            Utility.database.addPkt(pktID)
-            Utility.numFindSNode = 0
-            Utility.listFindSNode = []
 
-            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
+            # Aggiungo il pacchetto della richiesta SUPE
+            Utility.database.addPkt(pktID)
+
+            # Invio la richiesta a tutti i Peer, cosi' inoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
                 tP = SenderAll(msg, listaP)

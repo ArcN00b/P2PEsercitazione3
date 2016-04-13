@@ -185,10 +185,10 @@ while True:
                 t1.run()
 
             #SLEEP PER ATTENDERE I RISULTATI
-            time.sleep(6)
+            time.sleep(4)
 
             # Visualizzo le possibili scelte
-            if len(Utility.listFindFile) == 0:
+            if len(Utility.listFindFile) != 0:
                 print("Nessun risultato")
             else:
                 print("Scelta MD5                       Nome")

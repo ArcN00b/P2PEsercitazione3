@@ -34,7 +34,7 @@ class Sender:
     # Funzione che lancia il worker e controlla la chiusura improvvisa
     def start(self):
         try:
-            r = random.randrange(0, 100)
+            r = 0 #random.randrange(0, 100)
             ipv4, ipv6 = Utility.getIp(self.ip)
             if r < 50:
                 a = ipv4
@@ -68,7 +68,7 @@ class Downloader(threading.Thread):
         md5 = self.md5
         name = self.name
 
-        r = random.randrange(0,100)
+        r = 0#random.randrange(0,100)
         ipv4, ipv6 = Utility.getIp(ipp2p)
         if r < 50:
             ind = ipv4

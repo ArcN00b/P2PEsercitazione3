@@ -157,7 +157,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 j = 0
                 for i in range(0,len(md5List)):
                     # Preparo per l'invio MD5 NAME NumPeer
-                    self.write((md5List[i][0] + md5List[i][1] + md5List[i][2].zfill(3)).encode())
+                    self.write((md5List[i][0] + md5List[i][1] + str(md5List[i][2]).zfill(3)).encode())
                     logging.debug('messaggio nel buffer pronto')
 
                     # Ora devo inserire nel messaggio tutti i peer che hanno il file
@@ -168,7 +168,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 self.shutdown()
 
             elif command == "AFIN":
-                numMd5 = fields[0]
+                numMd5 = int(fields[0])
 
                 # Leggo MD5 NAME NUM PEER dal socket
                 for i in range(0, numMd5):

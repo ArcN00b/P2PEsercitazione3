@@ -259,7 +259,7 @@ class ReceiveHandler(asyncore.dispatcher):
             # Procedura ALGI
             elif command=='ALGI':
                 # Solo il peer deve elaborare una algi
-                if not Utility.superNodo:
+                if not Utility.superNodo and Utility.sessionId=='':
                     # controllo se ho ricevuto un sessionId valido se si lo salvo altrimenti no
                     s='0'*16
                     ssID=fields[0]

@@ -39,9 +39,10 @@ while True:
     print("4. Ricerca File")
     print("5. Logout")
     print("6. Visualizza File")
+    print("7. Aggiungi Supernodo")
     if Utility.superNodo:
-        print("7. Aggiorna Supernodi")
-        print("8. Visualizza Peer")
+        print("8. Aggiorna Supernodi")
+        print("9. Visualizza Peer")
     print(" ")
     sel=input("Inserisci il numero del comando da eseguire ")
 
@@ -275,7 +276,7 @@ while True:
                 print("Non ci sono file nel database")
 
     #Aggiorna supernodi
-    elif sel=='7':
+    elif sel=='8':
         if Utility.superNodo:
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
@@ -298,7 +299,8 @@ while True:
                 tS = SenderAll(msg, listaS)
                 tS.run()
 
-    elif sel=='8':
+    #Visualizza Peer
+    elif sel=='9':
         if Utility.superNodo:
             lst=Utility.database.listPeer(1)
             # Visualizzo la lista dei peer collegati
@@ -306,10 +308,33 @@ while True:
                 print("SessionID        IP                                                      Porta")
                 for i in range(0,len(lst)):
                     print(lst[i][0] + " " + lst[i][2]+" "+lst[i][1])
-
             else:
                 print("Non ci peer collegati")
 
+    #Aggiungi supernodo al database
+    elif sel=='7':
+        sel=input("Inserici Ipv4 ")
+        t=sel.split('.')
+        ipv4=""
+        ipv4=ipv4+'{:0>3}'.format(t[0])+'.'
+        ipv4=ipv4+'{:0>3}'.format(t[1])+'.'
+        ipv4=ipv4+'{:0>3}'.format(t[2])+'.'
+        ipv4=ipv4+'{:0>3}'.format(t[3])+'|'
+        sel=input("Inserici Ipv6 ")
+        t=sel.split(':')
+        ipv6=""
+        ipv6=ipv6+'{:0>4}'.format(t[0])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[1])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[2])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[3])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[4])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[5])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[6])+':'
+        ipv6=ipv6+'{:0>4}'.format(t[7])
+        sel=input("Inserici Porta ")
+        port='{:0>5}'.format(int(sel))
+        ip=ipv4+ipv6
+        Utility.database.addSuperNode(ip,port)
 
     else:
         print("Commando Errato, attesa nuovo comando ")

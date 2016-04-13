@@ -40,7 +40,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 chuncklen = 512
                 peer_md5 = fields[0]
                 # TODO cambiato questo metodo perche il database e cambiato
-                obj = Utility.database.findFile(Utility.sessionId,peer_md5,1)
+                obj = Utility.database.findFile(Utility.sessionId,peer_md5,None,1)
 
                 if len(obj) > 0:
                     # svuota il buffer
@@ -96,9 +96,14 @@ class ReceiveHandler(asyncore.dispatcher):
                 msg = "QUER" + pktID + ip + port + ttl + search
                 Utility.database.addPkt(pktID)
 
+                # Salvo i risultati della ricerca che conosco già
+                files = Utility.database.findFile(None,None,search.strip(),3)
+                for i in range(0, len(files)):
+                    peer = Utility.database.findPeer(files[i][0],None,None,2)
+                    Utility.listResultFile.append([pktID, peer[0][0], peer[0][1], files[i][1], files[i][2]])
+
                 # Invio la query a tutti i supernodi conosciuti
                 lista = Utility.database.listSuperNode()
-                lista.append([Utility.MY_IPV4+'|'+Utility.MY_IPV6,Utility.PORT])
                 if len(lista) > 0:
                     t1 = SenderAll(msg, lista)
                     t1.run()
@@ -133,13 +138,13 @@ class ReceiveHandler(asyncore.dispatcher):
                     # Controllo se l'md5 effettivamente e diverso
                     if result[i][3] not in md5List:
                         md5List.append([result[i][3], result[i][4], 0]) # MD5 NAME e NPEER
-                        peerList.append(result[i][1], result[i][2])     # IP e PORT
+                        peerList.append([result[i][1], result[i][2]]) # IP e PORT
                         numPeer = 1
 
                         # Controllo nel resto dei risultati se e presente lo stesso MD5
                         for j in range(i+1, len(result)):
                             if md5List[numMd5][0] == result[j][3]:
-                                peerList.append(result[j][1], result[j][2])
+                                peerList.append([result[j][1], result[j][2]])
                                 numPeer += 1
                         md5List[numMd5][2] = numPeer
                         numMd5 += 1
@@ -152,12 +157,12 @@ class ReceiveHandler(asyncore.dispatcher):
                 j = 0
                 for i in range(0,len(md5List)):
                     # Preparo per l'invio MD5 NAME NumPeer
-                    self.write((md5List[i][0] + md5List[i][1] + md5List[i][2]).encode())
+                    self.write((md5List[i][0] + md5List[i][1] + md5List[i][2].zfill(3)).encode())
                     logging.debug('messaggio nel buffer pronto')
 
                     # Ora devo inserire nel messaggio tutti i peer che hanno il file
-                    for k in range (0, md5List[i][2]):
-                        self.write(peerList[j][0] + peerList[j][1])
+                    for k in range(0, md5List[i][2]):
+                        self.write((peerList[j][0] + peerList[j][1]).encode())
                         j += 1
 
                 self.shutdown()
@@ -215,7 +220,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     msgRet = msgRet + ip + port
                     lst = Utility.database.findMd5(name.strip(' '))
                     for i in range(0, len(lst)):
-                        name = Utility.database.findFile(None,lst[i][0],2)
+                        name = Utility.database.findFile(None,None,lst[i][0],2)
                         r = msgRet
                         r = r + lst[i][0] + str(name[0][0]).ljust(100, ' ')
                         t1 = Sender(r, ipDest, portDest)

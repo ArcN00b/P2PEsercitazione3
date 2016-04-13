@@ -45,7 +45,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 if len(obj) > 0:
                     # svuota il buffer
                     self.out_buffer = []
-                    filename = Utility.PATHDIR + str(obj[0][0])
+                    filename = Utility.PATHDIR + str(obj[0][0].strip())#TODO aggiunto strip per evitare errori dovuti al nuovo database
                     # lettura statistiche file
                     statinfo = os.stat(filename)
                     # imposto lunghezza del file

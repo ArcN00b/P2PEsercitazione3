@@ -165,19 +165,18 @@ while True:
                 fileScelto=i-1
                 # Elimino il file
                 Utility.database.removeFile(Utility.sessionId,lst[fileScelto][0])
-                print("Operazione completata")
-            else:
-                print("Non ci sono file nel database")
-                True
 
             #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
             if not Utility.superNodo:
                 #genero il messaggio da mandare al supernodo con il file eliminato
-                md5=lst[i][0]
-                name=lst[i][1]
+                md5=lst[fileScelto][0]
+                name=lst[fileScelto][1]
                 msg='DEFF'+Utility.sessionId+md5+name
                 t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 t.start()
+                print("Operazione completata")
+            else:
+                print("Non ci sono file nel database")
         else:
             print("Effettuare Login")
 

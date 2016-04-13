@@ -49,8 +49,6 @@ while True:
     #Connessione a un supernodo, funziona solo se sei un peer
     if sel=='1':
         if not Utility.superNodo:
-            # TODO se sei gia connesso eseguire la procedura di LOGO prima del nuovo LOGI
-
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -185,7 +183,7 @@ while True:
 
     #Ricerca
     elif sel=='4':
-        # TODO se il tuo e presente non devi comparire nella lista dei risultati
+        #TODO se il tuo e presente non devi comparire nella lista dei risultati
         if Utility.sessionId != '':
             sel = input("Inserisci stringa da ricercare ")
             while len(sel) > 20:

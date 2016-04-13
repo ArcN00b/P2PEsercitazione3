@@ -79,7 +79,7 @@ class Parser:
 
         # Parsing RETR
         elif command == 'RETR':
-            fields[0] = data[4:20]  # MD5[16B]
+            fields[0] = data[4:36]  # MD5[32B]
 
         # Parsing ARET
         elif command == 'ARET':

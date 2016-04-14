@@ -81,7 +81,7 @@ class SenderAndWait:
 
     def close(self):
         self.sock.shutdown(socket.SHUT_RDWR)
-        self.close()
+        self.sock.close()
 
 class Downloader(threading.Thread):
     # Costruttore che inizializza gli attributi del Worker
@@ -122,7 +122,7 @@ class Downloader(threading.Thread):
         recv_mess = sock.recv(10).decode()
         if recv_mess[:4] == "ARET":
             num_chunk = int(recv_mess[4:])
-            count_chunk = 0
+            print("Download avviato")
 
             # apro il file per la scrittura
             f = open(Utility.PATHDIR + name.rstrip(' '), "wb")  # Apro il file rimuovendo gli spazi finali dal nome
@@ -172,23 +172,21 @@ class AFinder:
 
             # Leggo MD5 NAME NUM PEER dal socket
             for i in range(0, numMd5):
-                tmp = self.sock.recv(119)  # leggo la lunghezza del chunk
-                while len(tmp) < 119:
-                    tmp += self.sock.recv(119 - len(tmp))
+                tmp = self.sock.recv(135)  # leggo la lunghezza del chunk
+                while len(tmp) < 135:
+                    tmp += self.sock.recv(135 - len(tmp))
                     if len(tmp) == 0:
                         raise Exception("Socket close")
 
-                print(tmp)
-
                 # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
-                if not tmp[116:].decode(errors='ignore').isnumeric():
+                if not tmp[-3:].decode(errors='ignore').isnumeric():
                     raise Exception("Packet loss")
 
                 # Salvo cie che e stato ricavato in ListFindFile
-                Utility.listFindFile.append([tmp[:16].decode(), tmp[16:-3].decode(), int(tmp[-3:].decode())])
+                Utility.listFindFile.append([tmp[:32].decode(), tmp[32:-3].decode(), int(tmp[-3:].decode())])
 
                 # Ottengo la lista dei peer che hanno lo stesso md5
-                numPeer = Utility.listFindFile[Utility.numFindFile][2]
+                numPeer = int(tmp[-3:].decode())
                 for j in range(0, numPeer):
 
                     # Leggo i dati di ogni peer dal socket
@@ -200,4 +198,4 @@ class AFinder:
                             raise Exception("Socket close")
 
                     # Salvo ciò che e stato ricavato in Peer List
-                    Utility.listFindPeer.append([tmp[:55].decode(), int(tmp[55:].decode())])
+                    Utility.listFindPeer.append([buffer[:55].decode(), int(buffer[55:].decode())])

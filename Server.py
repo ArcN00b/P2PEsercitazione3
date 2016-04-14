@@ -16,10 +16,10 @@ class Server_Peer:
         u1 = ReceiveServerIPV4(self.stop_queue,self.ipv4,self.port)
         self.server_thread = threading.Thread(target=u1)#crea un thread e gli assa l'handler per il server da far partire
         self.stop_queueIpv6 = queue.Queue(1)
-        #u2 = ReceiveServerIPV6(self.stop_queueIpv6,self.ipv6,self.port)
-        #self.server_threadIP6 = threading.Thread(target=u2)
+        u2 = ReceiveServerIPV6(self.stop_queueIpv6,self.ipv6,self.port)
+        self.server_threadIP6 = threading.Thread(target=u2)
         self.server_thread.start()#parte
-        #self.server_threadIP6.start()
+        self.server_threadIP6.start()
 
 
 class ReceiveServerIPV4(asyncore.dispatcher):

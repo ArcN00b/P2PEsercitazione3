@@ -23,6 +23,7 @@ if sel=='s':
     Utility.sessionId='0'*16
     Utility.superNodo=True
     Utility.PORT=80
+    Utility.database.addPeer(Utility.sessionId, Utility.MY_IPV4+"|"+Utility.MY_IPV6, str(Utility.PORT).zfill(5))
 else:
     Utility.superNodo=False
     Utility.PORT=3000
@@ -131,7 +132,7 @@ while True:
             print("Effettuare Login")
 
     # Rimozione di un file
-    elif sel=='3':
+    elif sel=='3': #TODO controllare se si tenta di cancellare file senza averne aggiunti
         #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
         if Utility.sessionId!='':
             # Ottengo la lista dei file dal database
@@ -168,7 +169,6 @@ while True:
 
     #Ricerca
     elif sel=='4':
-        # TODO se il tuo e presente non devi comparire nella lista dei risultati
         if Utility.sessionId != '':
             sel = input("Inserisci stringa da ricercare ")
             while len(sel) > 20:
@@ -184,14 +184,15 @@ while True:
             # Aspetto la risposta della FIND
             tf = AFinder(sock)
             tf.run()
+            ts.close()
 
             # Visualizzo le possibili scelte
-            if len(Utility.listFindFile) != 0:
+            if len(Utility.listFindFile) == 0:
                 print("Nessun risultato")
             else:
-                print("Scelta MD5                       Nome")
+                print("Scelta MD5                                Nome")
                 for i in range(0, len(Utility.listFindFile)):
-                    print(str(i+1) + " " + Utility.listFindFile[i][0] + " " + Utility.listFindFile[i][1])
+                    print(str(i+1) + " " + Utility.listFindFile[i][0] + "   " + Utility.listFindFile[i][1])
 
                 # Chiedo quale file scaricare
                 sel = -1
@@ -209,9 +210,9 @@ while True:
                             begin += Utility.listFindFile[i][2]
 
                     # Ora begin contiene l'indice di ListFindPeer in cui si trovano i peer che hanno quel md5 selezionato
-                    print("Scelta IP                                            Porta")
+                    print("Scelta IP                                                  Porta")
                     for i in range(0, Utility.listFindFile[end][2]):
-                        print(str(i + 1) + " " + Utility.listFindPeer[begin + i][0] + " " + Utility.listFindPeer[begin + i][1])
+                        print(str(i + 1) + " " + Utility.listFindPeer[begin + i][0] + "   " + str(Utility.listFindPeer[begin + i][1]))
 
                     # Chiedo quale file scaricare
                     sel = -1

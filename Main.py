@@ -23,7 +23,7 @@ if sel=='s':
     Utility.sessionId='0'*16
     Utility.superNodo=True
     Utility.PORT=80
-    Utility.database.addPeer(Utility.sessionId, Utility.MY_IPV4+"|"+Utility.MY_IPV6, str(Utility.PORT).zfill(5))
+    #Utility.database.addPeer(Utility.sessionId, Utility.MY_IPV4+"|"+Utility.MY_IPV6, str(Utility.PORT).zfill(5))
 else:
     Utility.superNodo=False
     Utility.PORT=3000

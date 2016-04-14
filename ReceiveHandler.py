@@ -76,7 +76,7 @@ class ReceiveHandler(asyncore.dispatcher):
                         r = f.read(chuncklen)
                     # Chiudo il file
                     f.close()
-                    self.shutdown()
+                self.shutdown()
 
             elif command == "FIND":
                 # TODO compilare manualmente listresultfile invece di inviare la query a se stesso
@@ -99,7 +99,11 @@ class ReceiveHandler(asyncore.dispatcher):
                 # Salvo i risultati della ricerca che conosco già
                 files = Utility.database.findFile(None,None,search.strip(),3)
                 for i in range(0, len(files)):
-                    peer = Utility.database.findPeer(files[i][0],None,None,2)
+                    if files[i][0] == '0'*16:
+                        peer = []
+                        peer.append([Utility.MY_IPV4 + "|" + Utility.MY_IPV6, str(Utility.PORT)])
+                    else:
+                        peer = Utility.database.findPeer(files[i][0],None,None,2)
                     Utility.listResultFile.append([pktID, peer[0][0], peer[0][1], files[i][2], files[i][1].ljust(100,' ')])
 
                 # Invio la query a tutti i supernodi conosciuti

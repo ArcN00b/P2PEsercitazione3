@@ -374,7 +374,7 @@ class ManageDB:
                 return count
 
     # Metodo per ricerca nome file da sessionId e Md5
-    def findFile(self,sessionId,Md5,flag):
+    def findFile(self,sessionId,Md5,name,flag):
         count=None
         try:
             # Connessione
@@ -387,6 +387,9 @@ class ManageDB:
             elif flag == 2:
                 c.execute("SELECT NAME FROM FILES WHERE MD5=:M",{"M":Md5})
                 count=c.fetchall()
+            elif flag == 3:
+                c.execute("SELECT * FROM FILES WHERE NAME LIKE '%" + name + "%' ")
+                count = c.fetchall()
 
             conn.commit()
 

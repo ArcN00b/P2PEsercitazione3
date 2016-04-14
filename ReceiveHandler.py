@@ -40,12 +40,12 @@ class ReceiveHandler(asyncore.dispatcher):
                 chuncklen = 512
                 peer_md5 = fields[0]
                 # TODO cambiato questo metodo perche il database e cambiato
-                obj = Utility.database.findFile(Utility.sessionId,peer_md5,1)
+                obj = Utility.database.findFile(Utility.sessionId,peer_md5,None,1)
 
                 if len(obj) > 0:
                     # svuota il buffer
                     self.out_buffer = []
-                    filename = Utility.PATHDIR + str(obj[0][0].strip())#TODO aggiunto strip per evitare errori dovuti al nuovo database
+                    filename = Utility.PATHDIR + str(obj[0][0]).strip()
                     # lettura statistiche file
                     statinfo = os.stat(filename)
                     # imposto lunghezza del file
@@ -96,15 +96,20 @@ class ReceiveHandler(asyncore.dispatcher):
                 msg = "QUER" + pktID + ip + port + ttl + search
                 Utility.database.addPkt(pktID)
 
+                # Salvo i risultati della ricerca che conosco già
+                files = Utility.database.findFile(None,None,search.strip(),3)
+                for i in range(0, len(files)):
+                    peer = Utility.database.findPeer(files[i][0],None,None,2)
+                    Utility.listResultFile.append([pktID, peer[0][0], peer[0][1], files[i][2], files[i][1].ljust(100,' ')])
+
                 # Invio la query a tutti i supernodi conosciuti
                 lista = Utility.database.listSuperNode()
-                lista.append([Utility.MY_IPV4+'|'+Utility.MY_IPV6,Utility.PORT])
                 if len(lista) > 0:
-                    t1 = SenderAll(msg, lista)
-                    t1.run()
+                    ts = SenderAll(msg, lista)
+                    ts.run()
 
                 # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
-                time.sleep(4)
+                time.sleep(1)
 
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
                 result = [row for row in Utility.listResultFile if pktID in row]
@@ -133,67 +138,40 @@ class ReceiveHandler(asyncore.dispatcher):
                     # Controllo se l'md5 effettivamente e diverso
                     if result[i][3] not in md5List:
                         md5List.append([result[i][3], result[i][4], 0]) # MD5 NAME e NPEER
-                        peerList.append(result[i][1], result[i][2])     # IP e PORT
+                        peerList.append([result[i][1], result[i][2]]) # IP e PORT
                         numPeer = 1
 
                         # Controllo nel resto dei risultati se e presente lo stesso MD5
                         for j in range(i+1, len(result)):
                             if md5List[numMd5][0] == result[j][3]:
-                                peerList.append(result[j][1], result[j][2])
+                                peerList.append([result[j][1], result[j][2]])
                                 numPeer += 1
                         md5List[numMd5][2] = numPeer
                         numMd5 += 1
 
-                # Compongo il messaggio di ritorno stile upload
-                mess = ("AFIN" + '{:0>3}'.format(len(md5List))).encode()
+                # svuota il buffer
+                self.out_buffer = []
+                mess = ("AFIN" + str(len(md5List)).zfill(3)).encode()
                 self.write(mess)
+                logging.debug('messaggio nel buffer pronto')
 
                 # Ora scorro entrambe le strutture compilate in precedenza così compilo il messaggio di risposta
                 j = 0
                 for i in range(0,len(md5List)):
                     # Preparo per l'invio MD5 NAME NumPeer
-                    self.write((md5List[i][0] + md5List[i][1] + md5List[i][2]).encode())
+                    mess = (md5List[i][0] + md5List[i][1] + str(md5List[i][2]).zfill(3)).encode()
+                    self.write(mess)
                     logging.debug('messaggio nel buffer pronto')
 
                     # Ora devo inserire nel messaggio tutti i peer che hanno il file
-                    for k in range (0, md5List[i][2]):
-                        self.write(peerList[j][0] + peerList[j][1])
-                        j += 1
+                    for k in range(0, md5List[i][2]):
+                        mess = (peerList[j+k][0] + peerList[j+k][1]).encode()
+                        self.write(mess)
+                        logging.debug('messaggio nel buffer pronto')
+                    j+=md5List[i][2]
 
                 self.shutdown()
 
-            elif command == "AFIN":
-                numMd5 = fields[0]
-
-                # Leggo MD5 NAME NUM PEER dal socket
-                for i in range(0, numMd5):
-                    tmp = self.recv(119)  # leggo la lunghezza del chunk
-                    while len(tmp) < 119:
-                        tmp += self.recv(119 - len(tmp))
-                        if len(tmp) == 0:
-                            raise Exception("Socket close")
-
-                    # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
-                    if not tmp[-3:].decode(errors='ignore').isnumeric():
-                        raise Exception("Packet loss")
-
-                    # Salvo cie che e stato ricavato in ListFindFile
-                    Utility.listFindFile.append([tmp[:16].decode(), tmp[16:-3].decode(), int(tmp[-3:].decode())])
-
-                    # Ottengo la lista dei peer che hanno lo stesso md5
-                    numPeer = Utility.listFindFile[Utility.numFindFile][2]
-                    for j in range(0, numPeer):
-
-                        # Leggo i dati di ogni peer dal socket
-                        buffer = self.recv(60)  # Leggo il contenuto del chunk
-                        while len(buffer) < 60:
-                            tmp = self.recv(60 - len(buffer))
-                            buffer += tmp
-                            if len(tmp) == 0:
-                                raise Exception("Socket close")
-
-                        # Salvo ciò che e stato ricavato in Peer List
-                        Utility.listFindPeer.append([tmp[:55].decode(), int(tmp[-5:].decode())])
 
             elif command == "QUER":
                 msgRet = 'AQUE'
@@ -215,11 +193,11 @@ class ReceiveHandler(asyncore.dispatcher):
                     msgRet = msgRet + ip + port
                     lst = Utility.database.findMd5(name.strip(' '))
                     for i in range(0, len(lst)):
-                        name = Utility.database.findFile(None,lst[i][0],2)
+                        name = Utility.database.findFile(None,None,lst[i][0],2)
                         r = msgRet
                         r = r + lst[i][0] + str(name[0][0]).ljust(100, ' ')
-                        t1 = Sender(r, ipDest, portDest)
-                        t1.run()
+                        ts = Sender(r, ipDest, portDest)
+                        ts.run()
 
                     # controllo se devo divulgare la query
                     if int(ttl) >= 1:
@@ -227,8 +205,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         msg = "QUER" + pkID + ipDest + portDest + ttl + name
                         lista = Utility.database.listSuperNode()
                         if len(lista) > 0:
-                            t2 = SenderAll(msg, lista)
-                            t2.run()
+                            ts = SenderAll(msg, lista)
+                            ts.run()
 
             # Salvo il risultato in una lista di risultati
             elif command=="AQUE":
@@ -253,9 +231,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         ssID='0'*16
 
                     msgRet='ALGI'+ssID
-                    #t=Sender(msgRet,ip,port)
-                    #t.start()
-                    self.write(msgRet)
+                    ts = Sender(msgRet,ip,port)
+                    ts.run()
 
             # Procedura ALGI
             elif command=='ALGI':
@@ -312,9 +289,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         Utility.database.removePeer(ssID)
                         #Comunico al peer il messaggio di ritorno
                         msgRet='ALGO'+'{:0>3}'.format(canc)
-                        #t=Sender(msgRet,ip,port)
-                        #t.start()
-                        self.write(msgRet)
+                        ts = Sender(msgRet,ip,port)
+                        ts.run()
 
             # Procedura ALGO
             elif command=='ALGO':
@@ -327,67 +303,48 @@ class ReceiveHandler(asyncore.dispatcher):
                     Utility.portSuperNodo=''
                     print('Logout effetuato, cancellati: '+delete)
 
-            # Procedura SUPE
+            # Gestisco arrivo pacchetto supe
             elif command=="SUPE":
                 pkID=fields[0]
-
-                # Controllo di non aver gia' ricevuto questa richiesta di SUPE
                 if Utility.database.checkPkt(pkID)==False:
                     Utility.database.addPkt(pkID)
-
-                    # Se sono un supernodo rispondo con ASUP
+                    # Se sono un supernodo rispondo con asup
                     if Utility.superNodo:
                         ip=Utility.MY_IPV4+"|"+Utility.MY_IPV6
                         port='{:0>5}'.format(Utility.PORT)
                         msgRet="ASUP"+pkID+ip+port
-                        t=Sender(msgRet,fields[1],fields[2])
-                        t.start()
-
-                    # Decremento il ttl e controllo se devo inviare il SUPE
+                        ts = Sender(msgRet,fields[1],fields[2])
+                        ts.run()
+                    # Decremento il ttl e controllo se devo inviare
                     ttl = int(fields[3])-1
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
-
-                        # Inoltro a tutti i peer
                         listaP=Utility.database.listPeer(2)
                         if len(listaP)>0:
-                            tP = SenderAll(msg,listaP)
-                            tP.run()
-
-                        # Inoltro a tutti i supernodi
+                            ts = SenderAll(msg,listaP)
+                            ts.run()
                         listaS=Utility.database.listSuperNode()
                         if len(listaS)>0:
-                            tS = SenderAll(msg,listaS)
-                            tS.run()
+                            ts = SenderAll(msg,listaS)
+                            ts.run()
 
-            # Procedura ASUP
             elif command=="ASUP":
                 pkID=fields[0]
                 ip=fields[1]
                 port=fields[2]
-
-                # Verifico che il pacchetto ricevuto sia corrispondente ad una mia SUPE
-                if Utility.database.checkPkt(pkID)==True:
-
-                    # Inserisco il supernodo nel db
+                if Utility.superNodo==True and Utility.database.checkPkt(pkID)==True:
                     Utility.database.addSuperNode(ip,port)
+                else:
+                    findPeer=False
+                    for i in range(0,len(Utility.listFindSNode)):
+                        if Utility.listFindSNode[i][1]==ip and Utility.listFindSNode[i][2]==port:
+                            findPeer=True
 
-                    # Procedura per la visualizzazione dei supernodi quando ci si vuole collegare ad un supernodo
-                    if Utility.superNodo==False:
-
-                        # Verifico che il supernodo non sia gia' stato considerato
-                        findPeer=False
-                        for i in range(0,len(Utility.listFindSNode)):
-                            if Utility.listFindSNode[i][1]==ip and Utility.listFindSNode[i][2]==port:
-                                findPeer=True
-
-                        # Se il pacchetto ASUP contiene un indirizzo di supernodo non ancora considerato
-                        #   lo aggiungo ai supernodi a cui si puo' collegare il peer
-                        if not findPeer:
-                            Utility.numFindSNode+=1
-                            Utility.listFindSNode.append(fields)
-                            print(str(Utility.numFindSNode) + " " + ip + " " + port)
+                    if Utility.database.checkPkt(pkID)==True and not findPeer:
+                        Utility.numFindSNode+=1
+                        Utility.listFindSNode.append(fields)
+                        print(str(Utility.numFindSNode) + " " + ip + " " + port)
 
             else:
                 logging.debug('ricevuto altro')

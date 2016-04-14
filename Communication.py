@@ -3,7 +3,6 @@ from builtins import print
 from Utility import *
 import threading
 import socket
-import logging
 
 # questa classe non e' un thread, ma ne genera per inviare i dati
 class SenderAll:
@@ -21,7 +20,7 @@ class SenderAll:
             porta = self.listaNear[i][1]
 
             s = Sender(messaggio, ip, porta)
-            s.start()
+            s.run()
 
 class Sender:
     # Costruttore che inizializza gli attributi del Worker
@@ -32,7 +31,7 @@ class Sender:
         self.port = port
 
     # Funzione che lancia il worker e controlla la chiusura improvvisa
-    def start(self):
+    def run(self):
         try:
             r = random.randrange(0, 100)
             ipv4, ipv6 = Utility.getIp(self.ip)
@@ -44,11 +43,45 @@ class Sender:
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
             sock.connect((a, int(self.port)))
-            print('inviato a ' + a+':'+str(self.port) + ' : ' + self.messaggio)
+            print('inviato a ' + a +':'+str(self.port) + ' : ' + self.messaggio)
             sock.sendall(self.messaggio.encode())
             sock.close()
         except Exception as e:
-            print("Errore Peer down " + self.ip + " " + self.port)
+            print("Errore Peer down " + self.ip + " " + str(self.port))
+
+class SenderAndWait:
+    # Costruttore che inizializza gli attributi del Worker
+    def __init__(self, messaggio, ip, port):
+        # definizione thread del client
+        self.messaggio = messaggio
+        self.ip = ip
+        self.port = port
+        self.sock = ''
+
+    # Funzione che lancia il worker e controlla la chiusura improvvisa
+    def run(self):
+        try:
+            r = random.randrange(0, 100)
+            ipv4, ipv6 = Utility.getIp(self.ip)
+            if r < 50:
+                a = ipv4
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            else:
+                a = ipv6
+                self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+
+            self.sock.connect((a, int(self.port)))
+            print('inviato a ' + a +':'+str(self.port) + ' : ' + self.messaggio)
+            self.sock.sendall(self.messaggio.encode())
+        except Exception as e:
+            print("Errore Peer down " + self.ip + " " + str(self.port))
+
+    def getSocket(self):
+        return self.sock
+
+    def close(self):
+        self.sock.shutdown(socket.SHUT_RDWR)
+        self.sock.close()
 
 class Downloader(threading.Thread):
     # Costruttore che inizializza gli attributi del Worker
@@ -89,7 +122,7 @@ class Downloader(threading.Thread):
         recv_mess = sock.recv(10).decode()
         if recv_mess[:4] == "ARET":
             num_chunk = int(recv_mess[4:])
-            count_chunk = 0
+            print("Download avviato")
 
             # apro il file per la scrittura
             f = open(Utility.PATHDIR + name.rstrip(' '), "wb")  # Apro il file rimuovendo gli spazi finali dal nome
@@ -122,3 +155,47 @@ class Downloader(threading.Thread):
             print("Download completato")
 
         sock.close()
+
+class AFinder:
+    # Costruttore che inizializza gli attributi del Worker
+    def __init__(self, sock):
+        self.sock = sock
+
+    def run(self):
+        # ricevo i primi 10 Byte che sono "ARET" + n_chunk
+        recv_mess = self.sock.recv(7).decode()
+        while len(recv_mess) < 7:
+            recv_mess += self.sock.recv(7 - len(recv_mess)).decode()
+
+        if recv_mess[:4] == "AFIN":
+            numMd5 = int(recv_mess[4:7])
+
+            # Leggo MD5 NAME NUM PEER dal socket
+            for i in range(0, numMd5):
+                tmp = self.sock.recv(135)  # leggo la lunghezza del chunk
+                while len(tmp) < 135:
+                    tmp += self.sock.recv(135 - len(tmp))
+                    if len(tmp) == 0:
+                        raise Exception("Socket close")
+
+                # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
+                if not tmp[-3:].decode(errors='ignore').isnumeric():
+                    raise Exception("Packet loss")
+
+                # Salvo cie che e stato ricavato in ListFindFile
+                Utility.listFindFile.append([tmp[:32].decode(), tmp[32:-3].decode(), int(tmp[-3:].decode())])
+
+                # Ottengo la lista dei peer che hanno lo stesso md5
+                numPeer = int(tmp[-3:].decode())
+                for j in range(0, numPeer):
+
+                    # Leggo i dati di ogni peer dal socket
+                    buffer = self.sock.recv(60)  # Leggo il contenuto del chunk
+                    while len(buffer) < 60:
+                        tmp = self.sock.recv(60 - len(buffer))
+                        buffer += tmp
+                        if len(tmp) == 0:
+                            raise Exception("Socket close")
+
+                    # Salvo ciò che e stato ricavato in Peer List
+                    Utility.listFindPeer.append([buffer[:55].decode(), int(buffer[55:].decode())])

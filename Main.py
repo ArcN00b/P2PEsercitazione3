@@ -12,10 +12,6 @@ from Server import *
 from Utility import *
 import os
 
-
-ipv4, ipv6 = Utility.getIp(Utility.MY_IPV4 +"|" + Utility.MY_IPV6)
-Server_Peer(ipv4, ipv6)
-
 #faccio scegliere all'utente se e supernodo o meno
 sel=input("Sei supernodo [s/n] ? ")
 while sel not in ['s', 'n']:
@@ -27,9 +23,13 @@ if sel=='s':
     Utility.sessionId='0'*16
     Utility.superNodo=True
     Utility.PORT=80
+    Utility.database.addPeer(Utility.sessionId, Utility.MY_IPV4+"|"+Utility.MY_IPV6, str(Utility.PORT).zfill(5))
 else:
     Utility.superNodo=False
     Utility.PORT=3000
+
+ipv4, ipv6 = Utility.getIp(Utility.MY_IPV4 + "|" + Utility.MY_IPV6)
+Server_Peer(ipv4, ipv6)
 
 #MENU
 while True:
@@ -49,6 +49,8 @@ while True:
     #Connessione a un supernodo, funziona solo se sei un peer
     if sel=='1':
         if not Utility.superNodo:
+            # TODO se sei gia connesso eseguire la procedura di LOGO prima del nuovo LOGI
+            # TODO aggiornare supernodi nel database se sono peer
             pktID=Utility.generateId(16)
             ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
             port='{:0>5}'.format(Utility.PORT)
@@ -61,16 +63,18 @@ while True:
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                tP = SenderAll(msg, listaP)
-                tP.run()
+                ts = SenderAll(msg, listaP)
+                ts.run()
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                tS = SenderAll(msg, listaS)
-                tS.run()
+                ts = SenderAll(msg, listaS)
+                ts.run()
 
-            # Scelgo il supernodo a cui voglio collegarmi
+            # Visualizzo le possibili scelte
+            #print("Scegli il supernodo a cui vuoi collegarti")
+
             i = -1
             while i not in range(0, Utility.numFindSNode +1):
                 i = int(input("Scegli il supernodo a cui vuoi collegarti\n"))
@@ -81,23 +85,6 @@ while True:
                 print ("Nessun supernodo trovato")
 
             elif i > 0:
-                # Effettuo la LOGO dal precedente supernodo
-                if Utility.sessionId!='':
-
-                    #Resetto le variabili globali anche se effettivamente non ricevo una ALGO di risposta
-                    Utility.sessionId=''
-                    Utility.ipSuperNodo=''
-                    Utility.portSuperNodo=''
-
-                    # Invio la LOGO al supernodo a cui sono collegato
-                    msg='LOGO'+Utility.sessionId
-                    try:
-                        tL=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                        tL.start()
-                    except Exception as e:
-                        print(e)
-
-                # Supernodo scelto, effettuo la LOGI
                 i = i - 1;
                 ipDest = Utility.listFindSNode[i][1]
                 portDest = Utility.listFindSNode[i][2]
@@ -106,12 +93,12 @@ while True:
                 Utility.portSuperNodo = portDest
 
                 try:
-                    t1 = Sender(msg, ipDest, portDest)
-                    t1.start()
+                    ts = Sender(msg, ipDest, portDest)
+                    ts.run()
                 except Exception as e:
                     print(e)
         else:
-            print("Errore: sei un supernodo, non puoi collegarti ad altri supernodi")
+            print("Sei un supernodo")
 
     #Aggiunta di un file
     elif sel=='2':
@@ -139,13 +126,13 @@ while True:
             if not Utility.superNodo:
                 #Creo il messaggio da inviare al supernodo
                 msg='ADFF'+Utility.sessionId+md5+name
-                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.start()
+                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts.run()
         else:
             print("Effettuare Login")
 
     # Rimozione di un file
-    elif sel=='3':
+    elif sel=='3': #TODO controllare se si tenta di cancellare file senza averne aggiunti
         #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
         if Utility.sessionId!='':
             # Ottengo la lista dei file dal database
@@ -169,11 +156,11 @@ while True:
             #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
             if not Utility.superNodo:
                 #genero il messaggio da mandare al supernodo con il file eliminato
-                md5=lst[fileScelto][0]
+                md5=lst[fileScelto][0] #TODO l'errore avviene qui, fileScelto non è definito
                 name=lst[fileScelto][1]
                 msg='DEFF'+Utility.sessionId+md5+name
-                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.start()
+                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts.run()
                 print("Operazione completata")
             else:
                 print("Non ci sono file nel database")
@@ -182,7 +169,6 @@ while True:
 
     #Ricerca
     elif sel=='4':
-        #TODO se il tuo e presente non devi comparire nella lista dei risultati
         if Utility.sessionId != '':
             sel = input("Inserisci stringa da ricercare ")
             while len(sel) > 20:
@@ -191,21 +177,22 @@ while True:
             msg = "FIND" + Utility.sessionId + search
             Utility.listFindFile = []
             numFindFile = 0
-            lista = Utility.database.listSuperNode()
-            if len(lista) > 0:
-                t1 = SenderAll(msg, lista)
-                t1.run()
+            ts = SenderAndWait(msg, Utility.ipSuperNodo, int(Utility.portSuperNodo))
+            ts.run()
+            sock = ts.getSocket()
 
-            #SLEEP PER ATTENDERE I RISULTATI
-            time.sleep(6)
+            # Aspetto la risposta della FIND
+            tf = AFinder(sock)
+            tf.run()
+            ts.close()
 
             # Visualizzo le possibili scelte
             if len(Utility.listFindFile) == 0:
                 print("Nessun risultato")
             else:
-                print("Scelta MD5                       Nome")
+                print("Scelta MD5                                Nome")
                 for i in range(0, len(Utility.listFindFile)):
-                    print(str(i+1) + " " + Utility.listFindFile[i][0] + " " + Utility.listFindFile[i][1])
+                    print(str(i+1) + " " + Utility.listFindFile[i][0] + "   " + Utility.listFindFile[i][1])
 
                 # Chiedo quale file scaricare
                 sel = -1
@@ -223,13 +210,13 @@ while True:
                             begin += Utility.listFindFile[i][2]
 
                     # Ora begin contiene l'indice di ListFindPeer in cui si trovano i peer che hanno quel md5 selezionato
-                    print("Scelta IP                                            Porta")
+                    print("Scelta IP                                                  Porta")
                     for i in range(0, Utility.listFindFile[end][2]):
-                        print(str(i + 1) + " " + Utility.listFindPeer[begin + i][0] + " " + Utility.listFindPeer[begin + i][1])
+                        print(str(i + 1) + " " + Utility.listFindPeer[begin + i][0] + "   " + str(Utility.listFindPeer[begin + i][1]))
 
                     # Chiedo quale file scaricare
                     sel = -1
-                    while sel not in range(0, len(Utility.listFindFile) + 1):
+                    while sel not in range(0, Utility.listFindFile[end][2] + 1):
                         sel = int(input("Scegli il file da scaricare oppure no (0 Non scarica nulla) "))
 
                     # Se la selezione e maggiore di 0 e quindi voglio scaricare
@@ -238,11 +225,15 @@ while True:
                         ipp2p = Utility.listFindPeer[index][0]
                         pp2p = Utility.listFindPeer[index][1]
 
-                        try:
-                            t1 = Downloader(ipp2p, pp2p, md5file, filename)
-                            t1.run()
-                        except Exception as e:
-                            print(e)
+                        # Se l'ip scelto non è il proprio
+                        if ipp2p != Utility.MY_IPV4 + "|" + Utility.MY_IPV6:
+                            try:
+                                td = Downloader(ipp2p, pp2p, md5file, filename)
+                                td.run()
+                            except Exception as e:
+                                print(e)
+                        else:
+                            print("Non è possibile scaricare da se stessi")
 
         else:
             print("Effettuare Login")
@@ -252,15 +243,11 @@ while True:
         #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
         if Utility.sessionId!='':
             if not Utility.superNodo:
-                #Resetto le variabili globali anche se effettivamente non ricevo una ALGO di risposta
-                Utility.sessionId=''
-                Utility.ipSuperNodo=''
-                Utility.portSuperNodo=''
-
                 # genero e invio il messaggio di logout al supernodo
                 msg='LOGO'+Utility.sessionId
-                t=Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                t.start()
+                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts.run()
+                Utility.sessionId = ''
             else:
                 print("Sei un supernodo")
         else:
@@ -300,21 +287,21 @@ while True:
             port='{:0>5}'.format(Utility.PORT)
             ttl='{:0>2}'.format(4)
             msg="SUPE"+pktID+ip+port+ttl
-
-            # Aggiungo il pacchetto della richiesta SUPE
             Utility.database.addPkt(pktID)
+            Utility.numFindSNode = 0
+            Utility.listFindSNode = []
 
-            # Invio la richiesta a tutti i Peer, cosi' inoltrano la richiesta
+            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                tP = SenderAll(msg, listaP)
-                tP.run()
+                ts = SenderAll(msg, listaP)
+                ts.run()
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                tS = SenderAll(msg, listaS)
-                tS.run()
+                ts = SenderAll(msg, listaS)
+                ts.run()
 
     #Visualizza Peer
     elif sel=='9':

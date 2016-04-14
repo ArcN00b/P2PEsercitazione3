@@ -23,7 +23,6 @@ if sel=='s':
     Utility.sessionId='0'*16
     Utility.superNodo=True
     Utility.PORT=80
-    #Utility.database.addPeer(Utility.sessionId, Utility.MY_IPV4+"|"+Utility.MY_IPV6, str(Utility.PORT).zfill(5))
 else:
     Utility.superNodo=False
     Utility.PORT=3000
@@ -48,30 +47,28 @@ while True:
 
     #Connessione a un supernodo, funziona solo se sei un peer
     if sel=='1':
+        pktID=Utility.generateId(16)
+        ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
+        port='{:0>5}'.format(Utility.PORT)
+        ttl='{:0>2}'.format(4)
+        msg="SUPE"+pktID+ip+port+ttl
+        Utility.database.addPkt(pktID)
+        Utility.numFindSNode = 0
+        Utility.listFindSNode = []
+
+        # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
+        listaP=Utility.database.listPeer(2)
+        if len(listaP)>0:
+            tP = SenderAll(msg, listaP)
+            tP.run()
+
+        # Invio la richiesta a tutti i SuperNodi
+        listaS=Utility.database.listSuperNode()
+        if len(listaS)>0:
+            tS = SenderAll(msg, listaS)
+            tS.run()
+
         if not Utility.superNodo:
-            # TODO se sei gia connesso eseguire la procedura di LOGO prima del nuovo LOGI
-            # TODO aggiornare supernodi nel database se sono peer
-            pktID=Utility.generateId(16)
-            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
-            port='{:0>5}'.format(Utility.PORT)
-            ttl='{:0>2}'.format(4)
-            msg="SUPE"+pktID+ip+port+ttl
-            Utility.database.addPkt(pktID)
-            Utility.numFindSNode = 0
-            Utility.listFindSNode = []
-
-            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
-            listaP=Utility.database.listPeer(2)
-            if len(listaP)>0:
-                tP = SenderAll(msg, listaP)
-                tP.run()
-
-            # Invio la richiesta a tutti i SuperNodi
-            listaS=Utility.database.listSuperNode()
-            if len(listaS)>0:
-                tS = SenderAll(msg, listaS)
-                tS.run()
-
             # Visualizzo le possibili scelte
             #print("Scegli il supernodo a cui vuoi collegarti")
 
@@ -85,6 +82,14 @@ while True:
                 print ("Nessun supernodo trovato")
 
             elif i > 0:
+                # LOGOUT
+                if Utility.sessionId != '':
+                    msg='LOGO'+Utility.sessionId
+                    ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                    ts.run()
+                    Utility.sessionId = ''
+
+                # LOGIN
                 i = i - 1;
                 ipDest = Utility.listFindSNode[i][1]
                 portDest = Utility.listFindSNode[i][2]
@@ -98,7 +103,7 @@ while True:
                 except Exception as e:
                     print(e)
         else:
-            print("Sei un supernodo")
+            print("Operazione completata")
 
     #Aggiunta di un file
     elif sel=='2':
@@ -156,7 +161,7 @@ while True:
                 #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
                 if not Utility.superNodo:
                     #genero il messaggio da mandare al supernodo con il file eliminato
-                    md5=lst[fileScelto][0] #TODO l'errore avviene qui, fileScelto non è definito
+                    md5=lst[fileScelto][0]
                     name=lst[fileScelto][1]
                     msg='DEFF'+Utility.sessionId+md5+name
                     ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
@@ -169,7 +174,6 @@ while True:
 
     #Ricerca
     elif sel=='4':
-        # TODO se il tuo e presente non devi comparire nella lista dei risultati
         if Utility.sessionId != '':
             sel = input("Inserisci stringa da ricercare ")
             while len(sel) > 20:

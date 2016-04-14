@@ -35,11 +35,9 @@ class ReceiveHandler(asyncore.dispatcher):
             command, fields = Parser.parse(data.decode())
 
             if command == "RETR":
-                # TODO controllare coerenza con nuovi metodi
                 # Imposto la lunghezza dei chunk e ottengo il nome del file a cui corrisponde l'md5
                 chuncklen = 512
                 peer_md5 = fields[0]
-                # TODO cambiato questo metodo perche il database e cambiato
                 obj = Utility.database.findFile(Utility.sessionId,peer_md5,None,1)
 
                 if len(obj) > 0:
@@ -79,7 +77,6 @@ class ReceiveHandler(asyncore.dispatcher):
                 self.shutdown()
 
             elif command == "FIND":
-                # TODO compilare manualmente listresultfile invece di inviare la query a se stesso
                 pktID = Utility.generateId(16)
                 #Ricavo i campi dal messaggio
                 sessionID = fields[0]
@@ -101,7 +98,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 for i in range(0, len(files)):
                     if files[i][0] == '0'*16:
                         peer = []
-                        peer.append([Utility.MY_IPV4 + "|" + Utility.MY_IPV6, str(Utility.PORT)])
+                        peer.append([Utility.MY_IPV4 + "|" + Utility.MY_IPV6, str(Utility.PORT).zfill(5)])
                     else:
                         peer = Utility.database.findPeer(files[i][0],None,None,2)
                     Utility.listResultFile.append([pktID, peer[0][0], peer[0][1], files[i][2], files[i][1].ljust(100,' ')])
@@ -348,6 +345,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     if Utility.database.checkPkt(pkID)==True and not findPeer:
                         Utility.numFindSNode+=1
                         Utility.listFindSNode.append(fields)
+                        Utility.database.addSuperNode(fields[1], fields[2])
                         print(str(Utility.numFindSNode) + " " + ip + " " + port)
 
             else:

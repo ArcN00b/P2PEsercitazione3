@@ -253,8 +253,9 @@ class ReceiveHandler(asyncore.dispatcher):
                         ssID='0'*16
 
                     msgRet='ALGI'+ssID
-                    t=Sender(msgRet,ip,port)
-                    t.start()
+                    #t=Sender(msgRet,ip,port)
+                    #t.start()
+                    self.write(msgRet)
 
             # Procedura ALGI
             elif command=='ALGI':
@@ -311,8 +312,9 @@ class ReceiveHandler(asyncore.dispatcher):
                         Utility.database.removePeer(ssID)
                         #Comunico al peer il messaggio di ritorno
                         msgRet='ALGO'+'{:0>3}'.format(canc)
-                        t=Sender(msgRet,ip,port)
-                        t.start()
+                        #t=Sender(msgRet,ip,port)
+                        #t.start()
+                        self.write(msgRet)
 
             # Procedura ALGO
             elif command=='ALGO':

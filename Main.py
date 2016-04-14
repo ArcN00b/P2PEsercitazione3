@@ -153,15 +153,15 @@ while True:
                 # Elimino il file
                 Utility.database.removeFile(Utility.sessionId,lst[fileScelto][0])
 
-            #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
-            if not Utility.superNodo:
-                #genero il messaggio da mandare al supernodo con il file eliminato
-                md5=lst[fileScelto][0] #TODO l'errore avviene qui, fileScelto non è definito
-                name=lst[fileScelto][1]
-                msg='DEFF'+Utility.sessionId+md5+name
-                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                ts.run()
-                print("Operazione completata")
+                #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
+                if not Utility.superNodo:
+                    #genero il messaggio da mandare al supernodo con il file eliminato
+                    md5=lst[fileScelto][0] #TODO l'errore avviene qui, fileScelto non è definito
+                    name=lst[fileScelto][1]
+                    msg='DEFF'+Utility.sessionId+md5+name
+                    ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                    ts.run()
+                    print("Operazione completata")
             else:
                 print("Non ci sono file nel database")
         else:

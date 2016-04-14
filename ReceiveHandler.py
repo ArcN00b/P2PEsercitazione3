@@ -233,6 +233,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     msgRet='ALGI'+ssID
                     ts = Sender(msgRet,ip,port)
                     ts.run()
+                    #self.write(msgRet.encode())
 
             # Procedura ALGI
             elif command=='ALGI':
@@ -291,6 +292,7 @@ class ReceiveHandler(asyncore.dispatcher):
                         msgRet='ALGO'+'{:0>3}'.format(canc)
                         ts = Sender(msgRet,ip,port)
                         ts.run()
+                        #self.write(msgRet.encode())
 
             # Procedura ALGO
             elif command=='ALGO':

@@ -322,12 +322,12 @@ class ReceiveHandler(asyncore.dispatcher):
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
                         listaP=Utility.database.listPeer(2)
                         if len(listaP)>0:
-                            ts = SenderAll(msg,listaP)
-                            ts.run()
+                            tP = SenderAll(msg,listaP)
+                            tP.run()
                         listaS=Utility.database.listSuperNode()
                         if len(listaS)>0:
-                            ts = SenderAll(msg,listaS)
-                            ts.run()
+                            tS = SenderAll(msg,listaS)
+                            tS.run()
 
             elif command=="ASUP":
                 pkID=fields[0]

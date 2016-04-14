@@ -63,14 +63,14 @@ while True:
             # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
             listaP=Utility.database.listPeer(2)
             if len(listaP)>0:
-                ts = SenderAll(msg, listaP)
-                ts.run()
+                tP = SenderAll(msg, listaP)
+                tP.run()
 
             # Invio la richiesta a tutti i SuperNodi
             listaS=Utility.database.listSuperNode()
             if len(listaS)>0:
-                ts = SenderAll(msg, listaS)
-                ts.run()
+                tS = SenderAll(msg, listaS)
+                tS.run()
 
             # Visualizzo le possibili scelte
             #print("Scegli il supernodo a cui vuoi collegarti")
@@ -132,7 +132,7 @@ while True:
             print("Effettuare Login")
 
     # Rimozione di un file
-    elif sel=='3': #TODO controllare se si tenta di cancellare file senza averne aggiunti
+    elif sel=='3':
         #Controllo se ho un sessionId, quindi se sono loggato a un supernodo
         if Utility.sessionId!='':
             # Ottengo la lista dei file dal database
@@ -153,15 +153,15 @@ while True:
                 # Elimino il file
                 Utility.database.removeFile(Utility.sessionId,lst[fileScelto][0])
 
-            #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
-            if not Utility.superNodo:
-                #genero il messaggio da mandare al supernodo con il file eliminato
-                md5=lst[fileScelto][0] #TODO l'errore avviene qui, fileScelto non è definito
-                name=lst[fileScelto][1]
-                msg='DEFF'+Utility.sessionId+md5+name
-                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
-                ts.run()
-                print("Operazione completata")
+                #Controllo se non sono supernodo, se si devo comunicare che ho cancellato il file
+                if not Utility.superNodo:
+                    #genero il messaggio da mandare al supernodo con il file eliminato
+                    md5=lst[fileScelto][0] #TODO l'errore avviene qui, fileScelto non è definito
+                    name=lst[fileScelto][1]
+                    msg='DEFF'+Utility.sessionId+md5+name
+                    ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                    ts.run()
+                    print("Operazione completata")
             else:
                 print("Non ci sono file nel database")
         else:
@@ -169,6 +169,7 @@ while True:
 
     #Ricerca
     elif sel=='4':
+        # TODO se il tuo e presente non devi comparire nella lista dei risultati
         if Utility.sessionId != '':
             sel = input("Inserisci stringa da ricercare ")
             while len(sel) > 20:

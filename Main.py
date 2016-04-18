@@ -151,7 +151,7 @@ while True:
 
                 # Chiedo quale file rimuovere
                 i = -1
-                while i not in range(0, len(lst)):
+                while i not in range(0, len(lst)+1):
                     i = int(input("Scegli il file da cancellare "))
 
                 fileScelto=i-1

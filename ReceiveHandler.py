@@ -194,7 +194,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     msgRet = msgRet + ip + port
                     lst = Utility.database.findMd5(name.strip(' '))
                     for i in range(0, len(lst)):
-                        name = Utility.database.findFile(None,None,lst[i][0],2)
+                        name = Utility.database.findFile(None,lst[i][0],None,2)
                         r = msgRet
                         r = r + lst[i][0] + str(name[0][0]).ljust(100, ' ')
                         ts = Sender(r, ipDest, portDest)

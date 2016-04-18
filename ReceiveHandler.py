@@ -304,12 +304,15 @@ class ReceiveHandler(asyncore.dispatcher):
                     Utility.portSuperNodo=''
                     print('Logout effetuato, cancellati: '+delete)
 
-            # Gestisco arrivo pacchetto supe
+            # Procedura SUPE
             elif command=="SUPE":
                 pkID=fields[0]
+
+                # Controllo di non aver gia' ricevuto questa richiesta di SUPE
                 if Utility.database.checkPkt(pkID)==False:
                     Utility.database.addPkt(pkID)
-                    # Se sono un supernodo rispondo con asup
+
+                    # Se sono un supernodo rispondo con ASUP
                     if Utility.superNodo:
                         ip=Utility.MY_IPV4+"|"+Utility.MY_IPV6
                         port='{:0>5}'.format(Utility.PORT)
@@ -321,32 +324,46 @@ class ReceiveHandler(asyncore.dispatcher):
                     if ttl > 0:
                         ttl='{:0>2}'.format(ttl)
                         msg="SUPE"+pkID+fields[1]+fields[2]+ttl
+
+                        # Inoltro a tutti i peer
                         listaP=Utility.database.listPeer(2)
                         if len(listaP)>0:
                             tP = SenderAll(msg,listaP)
                             tP.run()
+
+                        # Inoltro a tutti i supernodi
                         listaS=Utility.database.listSuperNode()
                         if len(listaS)>0:
                             tS = SenderAll(msg,listaS)
                             tS.run()
 
+            # Procedura ASUP
             elif command=="ASUP":
                 pkID=fields[0]
                 ip=fields[1]
                 port=fields[2]
-                if Utility.superNodo==True and Utility.database.checkPkt(pkID)==True:
-                    Utility.database.addSuperNode(ip,port)
-                else:
-                    findPeer=False
-                    for i in range(0,len(Utility.listFindSNode)):
-                        if Utility.listFindSNode[i][1]==ip and Utility.listFindSNode[i][2]==port:
-                            findPeer=True
 
-                    if Utility.database.checkPkt(pkID)==True and not findPeer:
-                        Utility.numFindSNode+=1
-                        Utility.listFindSNode.append(fields)
-                        Utility.database.addSuperNode(fields[1], fields[2])
-                        print(str(Utility.numFindSNode) + " " + ip + " " + port)
+                # Verifico che il pacchetto ricevuto sia corrispondente ad una mia SUPE
+                if Utility.database.checkPkt(pkID)==True:
+
+                    # Inserisco il supernodo nel db
+                    Utility.database.addSuperNode(ip,port)
+
+                    # Procedura per la visualizzazione dei supernodi quando ci si vuole collegare ad un supernodo
+                    if Utility.superNodo==False:
+
+                        # Verifico che il supernodo non sia gia' stato considerato
+                        findPeer=False
+                        for i in range(0,len(Utility.listFindSNode)):
+                            if Utility.listFindSNode[i][1]==ip and Utility.listFindSNode[i][2]==port:
+                                findPeer=True
+
+                        # Se il pacchetto ASUP contiene un indirizzo di supernodo non ancora considerato
+                        #   lo aggiungo ai supernodi a cui si puo' collegare il peer
+                        if not findPeer:
+                            Utility.numFindSNode+=1
+                            Utility.listFindSNode.append(fields)
+                            print(str(Utility.numFindSNode) + " " + ip + " " + port)
 
             else:
                 logging.debug('ricevuto altro')

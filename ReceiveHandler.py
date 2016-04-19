@@ -28,7 +28,6 @@ class ReceiveHandler(asyncore.dispatcher):
 
         data = self.recv(2048)
         logging.debug(data)
-        print(data)
 
         if len(data) > 0:
             # converto i comandi
@@ -110,13 +109,25 @@ class ReceiveHandler(asyncore.dispatcher):
                     ts.run()
 
                 # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
-                while Utility.database.checkPkt(pktID)==True:
-                    True
-                #time.sleep(10)
+                while Utility.database.checkPkt(pktID):
+                    time.sleep(0.001)
+
 
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
-                result = [row for row in Utility.listResultFile if pktID in row]
-                Utility.listResultFile = [row for row in Utility.listResultFile if pktID not in row]
+                result = []
+                for row in Utility.listResultFile:
+                    if pktID == row[0]:
+                        result.append(row)
+
+                tmp = []
+                for row in Utility.listResultFile:
+                    if pktID not in row:
+                        tmp.append(row)
+                Utility.listResultFile = tmp
+
+
+                # result = [row for row in Utility.listResultFile if pktID in row]
+                # Utility.listResultFile = [row for row in Utility.listResultFile if pktID not in row]
 
                 ''' Il formato delle righe di result e quello delle AQUE senza il "AQUE" quindi:
 

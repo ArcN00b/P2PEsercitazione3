@@ -4,13 +4,15 @@ import os
 import asyncore
 import socket
 import threading
+import os
 from ManageDB import *
 from Parser import *
 from Utility import *
 from Communication import *
 from Server import *
 from Utility import *
-import os
+
+logging.basicConfig(level=logging.DEBUG)
 
 #faccio scegliere all'utente se e supernodo o meno
 sel=input("Sei supernodo [s/n] ? ")

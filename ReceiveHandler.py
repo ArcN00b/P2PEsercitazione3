@@ -110,7 +110,9 @@ class ReceiveHandler(asyncore.dispatcher):
                     ts.run()
 
                 # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
-                time.sleep(1)
+                while Utility.database.checkPkt(pktID)==True:
+                    True
+                #time.sleep(10)
 
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
                 result = [row for row in Utility.listResultFile if pktID in row]
@@ -181,29 +183,33 @@ class ReceiveHandler(asyncore.dispatcher):
                 ipDest = fields[1]
                 portDest = fields[2]
                 ttl = fields[3]
-                name = fields[4]
+                filename = fields[4]
 
                 # Controllo se il packetId e già presente se e presente non rispondo alla richiesta
                 # E non la rispedisco
                 if not Utility.database.checkPkt(pkID):
                     Utility.database.addPkt(pkID)
                     # Esegue la risposta ad una query
-                    msgRet = msgRet + pkID
-                    ip = Utility.MY_IPV4 + '|' + Utility.MY_IPV6
-                    port = '{:0>5}'.format(Utility.PORT)
-                    msgRet = msgRet + ip + port
-                    lst = Utility.database.findMd5(name.strip(' '))
+                    lst = Utility.database.findMd5(filename.strip(' '))
                     for i in range(0, len(lst)):
-                        name = Utility.database.findFile(None,lst[i][0],None,2)
-                        r = msgRet
-                        r = r + lst[i][0] + str(name[0][0]).ljust(100, ' ')
-                        ts = Sender(r, ipDest, portDest)
-                        ts.run()
+                        n = Utility.database.findFile(None,lst[i][0],None,2)
+                        for j in range(0,len(n)):
+                            msgRet = 'AQUE'+ pkID
+                            if n[j][1]=='0'*16:
+                                ip = Utility.MY_IPV4 + '|' + Utility.MY_IPV6
+                                port = '{:0>5}'.format(Utility.PORT)
+                                msgRet = msgRet + ip + port
+                            else:
+                                date=Utility.database.findPeer(n[j][1],None,None,2)
+                                msgRet = msgRet+date[0][0]+date[0][1]
+                            r = msgRet + lst[i][0] + str(n[j][0]).ljust(100, ' ')
+                            ts = Sender(r, ipDest, portDest)
+                            ts.run()
 
                     # controllo se devo divulgare la query
                     if int(ttl) >= 1:
                         ttl = '{:0>2}'.format(int(ttl) - 1)
-                        msg = "QUER" + pkID + ipDest + portDest + ttl + name
+                        msg = "QUER" + pkID + ipDest + portDest + ttl + filename
                         lista = Utility.database.listSuperNode()
                         if len(lista) > 0:
                             ts = SenderAll(msg, lista)

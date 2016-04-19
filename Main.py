@@ -296,7 +296,7 @@ while True:
         if len(lst) > 0:
             print("IP                                                      Porta")
             for i in range(0,len(lst)):
-                print(lst[i][0] + " " + lst[i][2])
+                print(lst[i][0] + " " + lst[i][1])
         else:
             print("Non ci peer collegati")
 

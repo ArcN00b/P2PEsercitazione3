@@ -34,7 +34,7 @@ class ManageDB:
             c.execute("CREATE TABLE PACKETS (ID TEXT NOT NULL, DATE INTEGER NOT NULL)")
 
             # Imposto il tempo di cancellazione dei packets
-            self.deleteTime = 60
+            self.deleteTime = 10
 
             conn.commit()
 
@@ -385,7 +385,7 @@ class ManageDB:
                 c.execute("SELECT NAME FROM FILES WHERE SESSIONID=:SID AND MD5=:M",{"SID":sessionId,"M":Md5})
                 count=c.fetchall()
             elif flag == 2:
-                c.execute("SELECT NAME FROM FILES WHERE MD5=:M",{"M":Md5})
+                c.execute("SELECT NAME,SESSIONID FROM FILES WHERE MD5=:M",{"M":Md5})
                 count=c.fetchall()
             elif flag == 3:
                 c.execute("SELECT * FROM FILES WHERE NAME LIKE '%" + name + "%' ")

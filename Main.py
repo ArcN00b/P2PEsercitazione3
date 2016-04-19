@@ -183,6 +183,7 @@ while True:
             search = sel.ljust(20, ' ')
             msg = "FIND" + Utility.sessionId + search
             Utility.listFindFile = []
+            Utility.listFindPeer=[]
             numFindFile = 0
             ts = SenderAndWait(msg, Utility.ipSuperNodo, int(Utility.portSuperNodo))
             ts.run()

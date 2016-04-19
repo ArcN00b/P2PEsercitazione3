@@ -4,6 +4,7 @@ from Parser import *
 import asyncore
 import logging
 import os
+import datetime
 
 class ReceiveHandler(asyncore.dispatcher):
 
@@ -27,7 +28,8 @@ class ReceiveHandler(asyncore.dispatcher):
     def handle_read(self):
 
         data = self.recv(2048)
-        logging.debug(data)
+        ts=time.time()
+        logging.debug(str(time.time())+ str(data))
 
         if len(data) > 0:
             # converto i comandi

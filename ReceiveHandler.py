@@ -5,6 +5,7 @@ import asyncore
 import logging
 import os
 import datetime
+import operator
 
 class ReceiveHandler(asyncore.dispatcher):
 
@@ -143,6 +144,9 @@ class ReceiveHandler(asyncore.dispatcher):
                 MD5 list e pensata per avere in ogni riga MD5 NAME NPEER
                 '''
 
+                # Riordino i risultati per MD5 per avere coerenza tra le strutture usate in futuro
+                result = sorted(result,key=itemgetter(3), reverse=False)
+
                 # Preparo le strutture dati per gestire l'invio dei risultati
                 md5List = []
                 peerList = []
@@ -151,8 +155,15 @@ class ReceiveHandler(asyncore.dispatcher):
 
                 # Suddivido i risultati per md5 diversi
                 for i in range(0,len(result)):
-                    # Controllo se l'md5 effettivamente e diverso
-                    if result[i][3] not in md5List:
+
+                    # Controllo che l'md5 effettivamente sia diverso dai precedenti
+                    match = False
+
+                    for md5 in md5List:
+                        if md5[0][0] == result[i][3]:
+                            match = True
+
+                    if not match:
                         md5List.append([result[i][3], result[i][4], 0]) # MD5 NAME e NPEER
                         peerList.append([result[i][1], result[i][2]]) # IP e PORT
                         numPeer = 1

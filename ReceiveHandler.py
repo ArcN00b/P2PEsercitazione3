@@ -5,7 +5,6 @@ import asyncore
 import logging
 import os
 import datetime
-import operator
 
 class ReceiveHandler(asyncore.dispatcher):
 
@@ -115,7 +114,6 @@ class ReceiveHandler(asyncore.dispatcher):
                 while Utility.database.checkPkt(pktID):
                     time.sleep(0.001)
 
-
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
                 result = []
                 for row in Utility.listResultFile:
@@ -144,9 +142,6 @@ class ReceiveHandler(asyncore.dispatcher):
                 MD5 list e pensata per avere in ogni riga MD5 NAME NPEER
                 '''
 
-                # Riordino i risultati per MD5 per avere coerenza tra le strutture usate in futuro
-                result = sorted(result,key=itemgetter(3), reverse=False)
-
                 # Preparo le strutture dati per gestire l'invio dei risultati
                 md5List = []
                 peerList = []
@@ -158,9 +153,8 @@ class ReceiveHandler(asyncore.dispatcher):
 
                     # Controllo che l'md5 effettivamente sia diverso dai precedenti
                     match = False
-
                     for md5 in md5List:
-                        if md5[0][0] == result[i][3]:
+                        if result[i][3] == md5[0]:
                             match = True
 
                     if not match:

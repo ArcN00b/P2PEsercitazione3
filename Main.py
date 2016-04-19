@@ -32,15 +32,15 @@ Server_Peer(ipv4, ipv6)
 
 #MENU
 while True:
-    print("1. Connetti a Supernodo")
+    print("1. Connetti/Aggiorna a Supernodo")
     print("2. Aggiungi File")
     print("3. Rimuovi File")
     print("4. Ricerca File")
     print("5. Logout")
     print("6. Visualizza File")
     print("7. Aggiungi Supernodo")
+    print("8. Visualizza Supernodi")
     if Utility.superNodo:
-        print("8. Aggiorna Supernodi")
         print("9. Visualizza Peer")
     print(" ")
     sel=input("Inserisci il numero del comando da eseguire ")
@@ -287,26 +287,18 @@ while True:
     #Aggiorna supernodi
     elif sel=='8':
         if Utility.superNodo:
-            pktID=Utility.generateId(16)
-            ip=Utility.MY_IPV4+'|'+Utility.MY_IPV6
-            port='{:0>5}'.format(Utility.PORT)
-            ttl='{:0>2}'.format(4)
-            msg="SUPE"+pktID+ip+port+ttl
-            Utility.database.addPkt(pktID)
-            Utility.numFindSNode = 0
-            Utility.listFindSNode = []
-
-            # Invio la richiesta a tutti i Peer, cosi' reinoltrano la richiesta
-            listaP=Utility.database.listPeer(2)
-            if len(listaP)>0:
-                ts = SenderAll(msg, listaP)
-                ts.run()
-
-            # Invio la richiesta a tutti i SuperNodi
-            listaS=Utility.database.listSuperNode()
-            if len(listaS)>0:
-                ts = SenderAll(msg, listaS)
-                ts.run()
+            print("Sei un supernodo")
+        else:
+            print("Sei un peer, connesso al supernodo "+Utility.ipSuperNodo+" "+Utility.portSuperNodo)
+        print("Lista supernodi salvati")
+        lst=Utility.database.listSuperNode()
+        # Visualizzo la lista dei peer collegati
+        if len(lst) > 0:
+            print("IP                                                      Porta")
+            for i in range(0,len(lst)):
+                print(lst[i][0] + " " + lst[i][2])
+        else:
+            print("Non ci peer collegati")
 
     #Visualizza Peer
     elif sel=='9':

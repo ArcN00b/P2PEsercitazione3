@@ -227,7 +227,7 @@ class ReceiveHandler(asyncore.dispatcher):
                             ssID=l[0][0]
                         else:
                             ssID=Utility.generateId(16)
-                        Utility.database.addPeer(ssID,ip,port)
+                            Utility.database.addPeer(ssID,ip,port)
                     except Exception as e:
                         ssID='0'*16
 
@@ -299,9 +299,6 @@ class ReceiveHandler(asyncore.dispatcher):
                 if not Utility.superNodo:
                     #Azzero le variabili e stampo
                     delete=fields[0]
-                    Utility.sessionId=''
-                    Utility.ipSuperNodo=''
-                    Utility.portSuperNodo=''
                     print('Logout effetuato, cancellati: '+delete)
 
             # Procedura SUPE

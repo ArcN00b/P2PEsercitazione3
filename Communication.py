@@ -162,7 +162,7 @@ class AFinder:
         self.sock = sock
 
     def run(self):
-        # ricevo i primi 10 Byte che sono "ARET" + n_chunk
+        # ricevo i primi 10 Byte che sono "AFIN" + n_chunk
         recv_mess = self.sock.recv(7).decode()
         while len(recv_mess) < 7:
             recv_mess += self.sock.recv(7 - len(recv_mess)).decode()

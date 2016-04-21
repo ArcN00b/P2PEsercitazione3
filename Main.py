@@ -2,6 +2,7 @@ import queue
 import sys
 import os
 import asyncore
+import logging
 import socket
 import threading
 import os
@@ -11,6 +12,9 @@ from Utility import *
 from Communication import *
 from Server import *
 from Utility import *
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 logging.basicConfig(level=logging.DEBUG)
 

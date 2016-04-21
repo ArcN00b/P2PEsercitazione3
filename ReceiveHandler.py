@@ -27,7 +27,7 @@ class ReceiveHandler(asyncore.dispatcher):
     def handle_read(self):
 
         data = self.recv(2048)
-        logging.debug(data)
+        logging.debug(str(time.time())+ str(data))
 
         if len(data) > 0:
             # converto i comandi
@@ -111,7 +111,7 @@ class ReceiveHandler(asyncore.dispatcher):
                 # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
                 while Utility.database.checkPkt(pktID):
                     time.sleep(0.001)
-
+                    True
 
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
                 result = []
@@ -149,8 +149,14 @@ class ReceiveHandler(asyncore.dispatcher):
 
                 # Suddivido i risultati per md5 diversi
                 for i in range(0,len(result)):
-                    # Controllo se l'md5 effettivamente e diverso
-                    if result[i][3] not in md5List:
+
+                    # Controllo che l'md5 effettivamente sia diverso dai precedenti
+                    match = False
+                    for md5 in md5List:
+                        if result[i][3] == md5[0]:
+                            match = True
+
+                    if not match:
                         md5List.append([result[i][3], result[i][4], 0]) # MD5 NAME e NPEER
                         peerList.append([result[i][1], result[i][2]]) # IP e PORT
                         numPeer = 1

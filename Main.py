@@ -24,10 +24,8 @@ while sel not in ['s', 'n']:
 if sel=='s':
     Utility.sessionId='0'*16
     Utility.superNodo=True
-    Utility.PORT=80
 else:
     Utility.superNodo=False
-    Utility.PORT=3000
 
 ipv4, ipv6 = Utility.getIp(Utility.MY_IPV4 + "|" + Utility.MY_IPV6)
 Server_Peer(ipv4, ipv6)

@@ -254,7 +254,7 @@ class ReceiveHandler(asyncore.dispatcher):
                     except Exception as e:
                         ssID='0'*16
 
-                    msgRet='ALGI'+ssID
+                    msgRet=('ALGI'+ssID).encode()
                     self.write(msgRet)
 
                     ## ts = Sender(msgRet,ip,port)
@@ -314,7 +314,7 @@ class ReceiveHandler(asyncore.dispatcher):
                         #cancello il peer dalla tabella dei peer
                         Utility.database.removePeer(ssID)
                         #Comunico al peer il messaggio di ritorno
-                        msgRet='ALGO'+'{:0>3}'.format(canc)
+                        msgRet=('ALGO'+'{:0>3}'.format(canc)).encode()
 
                         ## scrittura sul buffer per uscita
                         self.write(msgRet)

@@ -94,6 +94,7 @@ while True:
                     ## lunghezza ALGO = 4 + 3
                     data = tr.receive(len=7)
                     ts.close()
+                    command, fields = Parser.parse(data.decode())
                     ## Azzero le variabili e stampo
                     delete = fields[0]
                     print('Logout effetuato, cancellati: ' + delete)
@@ -289,6 +290,7 @@ while True:
                 ## lunghezza ALGO = 4 + 3
                 data = tr.receive(len=7)
                 ts.close()
+                command, fields = Parser.parse(data.decode())
                 ## Azzero le variabili e stampo
                 delete = fields[0]
                 print('Logout effetuato, cancellati: ' + delete)

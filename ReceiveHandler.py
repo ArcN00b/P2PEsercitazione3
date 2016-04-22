@@ -256,6 +256,7 @@ class ReceiveHandler(asyncore.dispatcher):
 
                     msgRet=('ALGI'+ssID).encode()
                     self.write(msgRet)
+                    self.shutdown()
 
                     ## ts = Sender(msgRet,ip,port)
                     ## ts.run()
@@ -318,6 +319,7 @@ class ReceiveHandler(asyncore.dispatcher):
 
                         ## scrittura sul buffer per uscita
                         self.write(msgRet)
+                        self.shutdown()
 
                         ##ts = Sender(msgRet,ip,port)
                         ##ts.run()

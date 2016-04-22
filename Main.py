@@ -15,9 +15,6 @@ from Utility import *
 
 logging.basicConfig(level=logging.DEBUG)
 
-
-logging.basicConfig(level=logging.DEBUG)
-
 #faccio scegliere all'utente se e supernodo o meno
 sel=input("Sei supernodo [s/n] ? ")
 while sel not in ['s', 'n']:
@@ -89,8 +86,17 @@ while True:
                 # LOGOUT
                 if Utility.sessionId != '':
                     msg='LOGO'+Utility.sessionId
-                    ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                    ts = SenderAndWait(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                     ts.run()
+                    sock = ts.getSocket()
+                    ## ricezione delle logout
+                    tr = Receiver(sock=sock)
+                    ## lunghezza ALGO = 4 + 3
+                    data = tr.receive(len=7)
+                    ts.close()
+                    ## Azzero le variabili e stampo
+                    delete = fields[0]
+                    print('Logout effetuato, cancellati: ' + delete)
                     Utility.sessionId = ''
 
                 # LOGIN
@@ -98,14 +104,34 @@ while True:
                 ipDest = Utility.listFindSNode[i][1]
                 portDest = Utility.listFindSNode[i][2]
                 msg="LOGI"+ip+port
-                Utility.ipSuperNodo = ipDest
-                Utility.portSuperNodo = portDest
 
                 try:
-                    ts = Sender(msg, ipDest, portDest)
+                    ts = SenderAndWait(msg, ipDest, portDest)
                     ts.run()
+                    sock = ts.getSocket()
+
+                    tr = Receiver(sock=sock)
+                    ## lunghezza algi 4 + 16
+                    data = tr.receive(len=20)
+                    ts.close()
+                    command, fields = Parser.parse(data.decode())
+
+                    if Utility.sessionId == '':
+                        # controllo se ho ricevuto un sessionId valido se si lo salvo altrimenti no
+                        s = '0' * 16
+                        ssID = fields[0]
+                        if ssID == s:
+                            Utility.ipSuperNodo = ''
+                            Utility.portSuperNodo = ''
+                        else:
+                            Utility.sessionId = ssID
+                            Utility.ipSuperNodo = ipDest
+                            Utility.portSuperNodo = portDest
+
                 except Exception as e:
                     print(e)
+
+
         else:
             print("Operazione completata")
 
@@ -255,8 +281,17 @@ while True:
             if not Utility.superNodo:
                 # genero e invio il messaggio di logout al supernodo
                 msg='LOGO'+Utility.sessionId
-                ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
+                ts = SenderAndWait(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 ts.run()
+                sock = ts.getSocket()
+                ## ricezione delle logout
+                tr = Receiver(sock=sock)
+                ## lunghezza ALGO = 4 + 3
+                data = tr.receive(len=7)
+                ts.close()
+                ## Azzero le variabili e stampo
+                delete = fields[0]
+                print('Logout effetuato, cancellati: ' + delete)
                 Utility.sessionId = ''
             else:
                 print("Sei un supernodo")

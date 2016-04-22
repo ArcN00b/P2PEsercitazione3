@@ -72,7 +72,7 @@ class SenderAndWait:
 
             self.sock.connect((a, int(self.port)))
             print('inviato a ' + a +':'+str(self.port) + ' : ' + self.messaggio)
-            self.sock.sendall(self.messaggio.encode())
+            self.sock.send(self.messaggio.encode())
         except Exception as e:
             print("Errore Peer down " + self.ip + " " + str(self.port))
 
@@ -82,6 +82,18 @@ class SenderAndWait:
     def close(self):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
+
+## classe che dato un socket riceve tutte le informazioni
+## secondo una lunghezza data di ingresso
+class Receiver:
+
+    def __init__(self, sock):
+        self.sock = sock
+
+##  metodo che ritorna le informazioni ricevute sulla lunghezza data
+    def receive(self, len):
+        return self.sock.recv(len)
+
 
 class Downloader(threading.Thread):
     # Costruttore che inizializza gli attributi del Worker
@@ -137,8 +149,11 @@ class Downloader(threading.Thread):
                         raise Exception("Socket close")
 
                 # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
-                if tmp.decode(errors='ignore').isnumeric() == False:
-                    raise Exception("Packet loss")
+                try:
+                    int(tmp.decode())
+                except Exception as e:
+                    raise Exception("number format exception")
+
                 chunklen = int(tmp.decode())
                 buffer = sock.recv(chunklen)  # Leggo il contenuto del chunk
 
@@ -162,7 +177,7 @@ class AFinder:
         self.sock = sock
 
     def run(self):
-        # ricevo i primi 10 Byte che sono "ARET" + n_chunk
+        # ricevo i primi 10 Byte che sono "AFIN" + n_chunk
         recv_mess = self.sock.recv(7).decode()
         while len(recv_mess) < 7:
             recv_mess += self.sock.recv(7 - len(recv_mess)).decode()
@@ -179,8 +194,11 @@ class AFinder:
                         raise Exception("Socket close")
 
                 # Eseguo controlli di coerenza su ciò che viene ricavato dal socket
-                if not tmp[-3:].decode(errors='ignore').isnumeric():
-                    raise Exception("Packet loss")
+                try:
+                    int(tmp[-3:].decode())
+                except Exception as e:
+                    raise Exception("number format exception")
+
 
                 # Salvo cie che e stato ricavato in ListFindFile
                 Utility.listFindFile.append([tmp[:32].decode(), tmp[32:-3].decode(), int(tmp[-3:].decode())])

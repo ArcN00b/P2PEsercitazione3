@@ -4,7 +4,6 @@ from Parser import *
 import asyncore
 import logging
 import os
-import datetime
 
 class ReceiveHandler(asyncore.dispatcher):
 
@@ -28,8 +27,8 @@ class ReceiveHandler(asyncore.dispatcher):
     def handle_read(self):
 
         data = self.recv(2048)
-        ts=time.time()
         logging.debug(str(time.time())+ str(data))
+        print(data)
 
         if len(data) > 0:
             # converto i comandi
@@ -112,7 +111,8 @@ class ReceiveHandler(asyncore.dispatcher):
 
                 # TIME SLEEP PER ATTENDERE I RISULTATI DELLA QUERY
                 while Utility.database.checkPkt(pktID):
-                    time.sleep(0.001)
+                    time.sleep(0.00000001)
+                    True
 
                 # Estraggo i risultati da Utility.listResultFile eliminandoli
                 result = []
@@ -256,6 +256,8 @@ class ReceiveHandler(asyncore.dispatcher):
                         ssID='0'*16
 
                     msgRet='ALGI'+ssID
+                    #self.write(msgRet.encode())
+
                     ts = Sender(msgRet,ip,port)
                     ts.run()
 
@@ -314,6 +316,10 @@ class ReceiveHandler(asyncore.dispatcher):
                         Utility.database.removePeer(ssID)
                         #Comunico al peer il messaggio di ritorno
                         msgRet='ALGO'+'{:0>3}'.format(canc)
+
+                        ## scrittura sul buffer per uscita
+                        #self.write(msgRet.encode())
+
                         ts = Sender(msgRet,ip,port)
                         ts.run()
 

@@ -27,7 +27,10 @@ class Utility:
     sessionId='' # Indica il sessionId del Peer
     database = ManageDB.ManageDB()
 
-    database.addSuperNode("172.030.007.003|fc00:0000:0000:0000:0000:0000:0007:0003","00080")
+    #database.addSuperNode("172.030.007.003|fc00:0000:0000:0000:0000:0000:0007:0003","03000")
+    #database.addSuperNode("172.030.007.004|fc00:0000:0000:0000:0000:0000:0007:0004","03000")
+    database.addSuperNode("172.030.007.002|fc00:0000:0000:0000:0000:0000:0007:0002","03000")
+
 
     # Metodo che genera un numero random nel range [1024, 65535]
     @staticmethod

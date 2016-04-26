@@ -12,7 +12,7 @@ from Communication import *
 from Server import *
 from Utility import *
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 #faccio scegliere all'utente se e supernodo o meno
 sel=input("Sei supernodo [s/n] ? ")
@@ -192,7 +192,7 @@ while True:
             # Aspetto la risposta della FIND
             tf = AFinder(sock)
             tf.run()
-            ts.close()
+            #ts.close()
 
             # Visualizzo le possibili scelte
             if len(Utility.listFindFile) == 0:
@@ -256,6 +256,8 @@ while True:
                 ts = Sender(msg,Utility.ipSuperNodo,int(Utility.portSuperNodo))
                 ts.run()
                 Utility.sessionId = ''
+                Utility.portSuperNodo=''
+                Utility.ipSuperNodo=''
             else:
                 print("Sei un supernodo")
         else:
@@ -291,7 +293,7 @@ while True:
     elif sel=='8':
         if Utility.superNodo:
             print("Sei un supernodo")
-        else:
+        elif Utility.sessionId!='':
             print("Sei un peer, connesso al supernodo "+Utility.ipSuperNodo+" "+Utility.portSuperNodo)
         print("Lista supernodi salvati")
         lst=Utility.database.listSuperNode()

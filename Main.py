@@ -24,6 +24,8 @@ while sel not in ['s', 'n']:
 if sel=='s':
     Utility.sessionId='0'*16
     Utility.superNodo=True
+    Utility.ipSuperNodo = Utility.MY_IPV4 + "|" + Utility.MY_IPV6
+    Utility.portSuperNodo = Utility.PORT
 else:
     Utility.superNodo=False
 
